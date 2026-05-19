@@ -1,211 +1,220 @@
-import React, { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { Card } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, Zap } from "lucide-react";
+import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { TempleVisualization } from "@/components/TempleVisualization";
-import { InputPanel } from "@/components/InputPanel";
-import { ChamberStateDisplay } from "@/components/ChamberStateDisplay";
-import { CoherenceEvolutionChart } from "@/components/CoherenceEvolutionChart";
-import { InterpretationsPanel } from "@/components/InterpretationsPanel";
-import { FinalOutputPanel } from "@/components/FinalOutputPanel";
-import { ProcessingHistoryLog } from "@/components/ProcessingHistoryLog";
-import { Loader2 } from "lucide-react";
-
-interface ChamberOutput {
-  chamber: string;
-  tag?: any;
-  interpretations?: any[];
-  constraints_applied?: string[];
-  coherence_evolution?: number[];
-  final_output?: any;
-  path_trace?: any;
-}
+import { Streamdown } from "streamdown";
 
 export default function Home() {
-  const { user, isAuthenticated } = useAuth();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [activeStep, setActiveStep] = useState<"outer_court" | "inner_court" | "holy_place" | "holy_of_holies" | null>(null);
-  const [chamberOutputs, setChamberOutputs] = useState<ChamberOutput[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
+  const { user, loading, isAuthenticated } = useAuth();
+  const [query, setQuery] = useState("");
+  const [emotionalValence, setEmotionalValence] = useState(0);
+  const [urgency, setUrgency] = useState(0.5);
+  const [activeTab, setActiveTab] = useState("input");
 
   const processQueryMutation = trpc.templeEngine.processQuery.useMutation();
-  const historyQuery = trpc.templeEngine.getHistory.useQuery();
-  const sessionDetailsQuery = trpc.templeEngine.getSessionDetails.useQuery(
-    { sessionId: currentSessionId || 0 },
-    { enabled: !!currentSessionId }
-  );
+  const historyQuery = trpc.templeEngine.getHistory.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
 
-  if (!isAuthenticated) {
+  const handleProcess = async () => {
+    if (!query.trim()) return;
+    await processQueryMutation.mutateAsync({
+      query,
+      emotionalValence,
+      urgency,
+    });
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-950 via-black to-indigo-950 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-center"
-        >
-          <h1 className="text-4xl font-bold text-amber-100 mb-4">Integrated Temple Engine</h1>
-          <p className="text-purple-300 mb-8 max-w-md">
-            A mystical, LLM-powered query processing visualizer that maps your input through a sacred four-chamber pipeline.
-          </p>
-          <Button
-            onClick={() => (window.location.href = getLoginUrl())}
-            className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-black font-semibold px-8 py-3 rounded-lg"
-          >
-            Sign In to Begin
-          </Button>
-        </motion.div>
+      <div className="min-h-screen bg-gradient-to-b from-purple-950 via-black to-purple-900 flex items-center justify-center">
+        <Loader2 className="animate-spin text-gold-400" size={48} />
       </div>
     );
   }
 
-  const handleProcessQuery = async (query: string, emotionalValence: number, urgency: number) => {
-    setIsProcessing(true);
-    setChamberOutputs([]);
-    setActiveStep(null);
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-purple-950 via-black to-purple-900 flex flex-col items-center justify-center">
+        <h1 className="text-5xl font-bold text-gold-400 mb-4">Integrated Temple Engine</h1>
+        <p className="text-purple-200 mb-8">A mystical, unified query processing visualizer</p>
+        <Button className="bg-gold-500 hover:bg-gold-600 text-black font-bold">
+          Sign In to Begin
+        </Button>
+      </div>
+    );
+  }
 
-    try {
-      const result = await processQueryMutation.mutateAsync({
-        query,
-        emotionalValence,
-        urgency,
-      });
-
-      setCurrentSessionId(result.sessionId);
-      setChamberOutputs(result.chamberOutputs);
-
-      const steps: Array<"outer_court" | "inner_court" | "holy_place" | "holy_of_holies"> = [
-        "outer_court",
-        "inner_court",
-        "holy_place",
-        "holy_of_holies",
-      ];
-
-      for (const step of steps) {
-        setActiveStep(step);
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-      }
-
-      setActiveStep(null);
-    } catch (error) {
-      console.error("Error processing query:", error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleSelectHistoryItem = async (item: any) => {
-    setCurrentSessionId(item.id);
-    setIsProcessing(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setIsProcessing(false);
-  };
-
-  const outerCourtData = chamberOutputs.find((c) => c.chamber === "outer_court");
-  const innerCourtData = chamberOutputs.find((c) => c.chamber === "inner_court");
-  const holyPlaceData = chamberOutputs.find((c) => c.chamber === "holy_place");
-  const holyOfHoliesData = chamberOutputs.find((c) => c.chamber === "holy_of_holies");
+  const journeyData = processQueryMutation.data;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-black to-indigo-950">
-      <header className="border-b border-purple-700/30 bg-black/20 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-            <h1 className="text-2xl font-bold text-amber-100">Integrated Temple Engine</h1>
-            <p className="text-xs text-purple-300">Sacred Query Processing Visualizer</p>
-          </motion.div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-purple-300">Welcome, {user?.name || "Seeker"}</span>
-          </div>
+    <div className="min-h-screen bg-gradient-to-b from-purple-950 via-black to-purple-900 p-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gold-400 mb-2">Temple Engine</h1>
+          <p className="text-purple-200">Unified consciousness processing through sacred chambers</p>
         </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <section>
-          <InputPanel onSubmit={handleProcessQuery} isLoading={isProcessing} />
-        </section>
+        {/* Main Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Input Panel */}
+          <Card className="lg:col-span-1 bg-purple-900/50 border-gold-500/30 p-6">
+            <h2 className="text-xl font-bold text-gold-400 mb-4">Query Input</h2>
+            
+            <Textarea
+              placeholder="Enter your query..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="bg-purple-800/50 border-purple-600 text-white mb-4 h-24"
+            />
 
-        {chamberOutputs.length > 0 && (
-          <section>
-            <TempleVisualization isProcessing={isProcessing} activeStep={activeStep} />
-          </section>
-        )}
-
-        {chamberOutputs.length > 0 && (
-          <section className="space-y-6">
-            <h2 className="text-2xl font-bold text-amber-100">Chamber Processing Results</h2>
-
-            {outerCourtData && (
-              <ChamberStateDisplay
-                chamber="outer_court"
-                title="Outer Court - Input & Symbolic Tagging"
-                data={outerCourtData}
-                isActive={activeStep === "outer_court"}
-              />
-            )}
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {innerCourtData && (
-                <ChamberStateDisplay
-                  chamber="inner_court"
-                  title="Inner Court - Variational Meaning Space"
-                  data={innerCourtData}
-                  isActive={activeStep === "inner_court"}
+            <div className="space-y-4">
+              <div>
+                <label className="text-purple-200 text-sm">Emotional Valence: {emotionalValence.toFixed(2)}</label>
+                <Slider
+                  value={[emotionalValence]}
+                  onValueChange={(val) => setEmotionalValence(val[0])}
+                  min={-1}
+                  max={1}
+                  step={0.1}
+                  className="w-full"
                 />
-              )}
-              {innerCourtData?.coherence_evolution && (
-                <CoherenceEvolutionChart data={innerCourtData.coherence_evolution} />
-              )}
+              </div>
+
+              <div>
+                <label className="text-purple-200 text-sm">Urgency: {urgency.toFixed(2)}</label>
+                <Slider
+                  value={[urgency]}
+                  onValueChange={(val) => setUrgency(val[0])}
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  className="w-full"
+                />
+              </div>
             </div>
 
-            {innerCourtData?.interpretations && (
-              <InterpretationsPanel interpretations={innerCourtData.interpretations} title="Generated Interpretations" />
+            <Button
+              onClick={handleProcess}
+              disabled={processQueryMutation.isPending || !query.trim()}
+              className="w-full mt-6 bg-gold-500 hover:bg-gold-600 text-black font-bold"
+            >
+              {processQueryMutation.isPending ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" size={16} />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Zap className="mr-2" size={16} />
+                  Process Query
+                </>
+              )}
+            </Button>
+          </Card>
+
+          {/* Journey Visualization */}
+          <div className="lg:col-span-2 space-y-4">
+            {journeyData && (
+              <>
+                {/* Chamber Flow */}
+                <Card className="bg-purple-900/50 border-gold-500/30 p-6">
+                  <h2 className="text-xl font-bold text-gold-400 mb-4">Chamber Journey</h2>
+                  <div className="space-y-3">
+                    {journeyData.journey.chambers.map((chamber, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-purple-800/50 border-l-4 border-gold-500 p-4 rounded"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="text-gold-400 font-bold">{chamber.id}</h3>
+                            <p className="text-purple-200 text-sm">{chamber.description}</p>
+                          </div>
+                          <span className="text-xs bg-purple-700 text-gold-300 px-2 py-1 rounded">
+                            {chamber.phenomenology}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                {/* Witness Observations */}
+                <Card className="bg-purple-900/50 border-gold-500/30 p-6">
+                  <h2 className="text-xl font-bold text-gold-400 mb-4">Witness Field</h2>
+                  <div className="space-y-2 text-sm">
+                    {journeyData.journey.witness.map((obs, idx) => (
+                      <div key={idx} className="bg-purple-800/50 p-3 rounded flex justify-between">
+                        <span className="text-purple-200">{obs.chamber}</span>
+                        <div className="flex gap-2">
+                          <span className="text-gold-400">{obs.coherence}</span>
+                          <span className="text-purple-300">{obs.resonance}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                {/* Corrections */}
+                {journeyData.journey.corrections.length > 0 && (
+                  <Card className="bg-purple-900/50 border-gold-500/30 p-6">
+                    <h2 className="text-xl font-bold text-gold-400 mb-4">Recursive Corrections</h2>
+                    <div className="space-y-2 text-sm">
+                      {journeyData.journey.corrections.map((corr, idx) => (
+                        <div key={idx} className="bg-purple-800/50 p-3 rounded">
+                          <p className="text-purple-200">
+                            {corr.from} → {corr.to}: <span className="text-gold-400">{corr.reason}</span>
+                          </p>
+                          <p className="text-purple-300 text-xs mt-1">{corr.note}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                {/* Final Output */}
+                <Card className="bg-purple-900/50 border-gold-500/30 p-6">
+                  <h2 className="text-xl font-bold text-gold-400 mb-4">Final Revelation</h2>
+                  <div className="bg-purple-800/50 p-4 rounded text-purple-100">
+                    <Streamdown>
+                      {JSON.stringify(journeyData.journey.finalOutput, null, 2)}
+                    </Streamdown>
+                  </div>
+                </Card>
+              </>
             )}
 
-            {holyPlaceData && (
-              <ChamberStateDisplay
-                chamber="holy_place"
-                title="Holy Place - Coherence & Constraints"
-                data={holyPlaceData}
-                isActive={activeStep === "holy_place"}
-              />
+            {!journeyData && (
+              <Card className="bg-purple-900/50 border-gold-500/30 p-12 text-center">
+                <p className="text-purple-300">Submit a query to begin the Temple Engine journey</p>
+              </Card>
             )}
+          </div>
+        </div>
 
-            {holyOfHoliesData && (
-              <FinalOutputPanel
-                unifiedState={holyOfHoliesData.final_output || { content: "", coherence: 0, resonance: 0 }}
-                pathTrace={holyOfHoliesData.path_trace}
-              />
-            )}
-          </section>
+        {/* History */}
+        {historyQuery.data && historyQuery.data.length > 0 && (
+          <Card className="mt-8 bg-purple-900/50 border-gold-500/30 p-6">
+            <h2 className="text-xl font-bold text-gold-400 mb-4">Query History</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {historyQuery.data.map((session: any) => (
+                <div key={session.id} className="bg-purple-800/50 p-4 rounded border border-purple-700">
+                  <p className="text-purple-200 text-sm truncate">{session.query}</p>
+                  <p className="text-purple-400 text-xs mt-2">
+                    {new Date(session.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Card>
         )}
-
-        {historyQuery.data && (
-          <section>
-            <ProcessingHistoryLog history={historyQuery.data} onSelectItem={handleSelectHistoryItem} isLoading={isProcessing} />
-          </section>
-        )}
-      </main>
-
-      {isProcessing && (
-        <motion.div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-40"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <motion.div
-            className="flex flex-col items-center gap-4"
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <Loader2 className="w-12 h-12 text-amber-400 animate-spin" />
-            <p className="text-amber-200 font-semibold">Processing through the Temple...</p>
-          </motion.div>
-        </motion.div>
-      )}
+      </div>
     </div>
   );
 }

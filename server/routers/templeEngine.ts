@@ -7,180 +7,22 @@ import {
   saveChamberState,
   getChamberStatesBySessionId,
 } from "../db";
+import { TempleEngine, type JourneyTrace } from "../templeEngine";
 import { TRPCError } from "@trpc/server";
 
-// Type definitions for chamber states
-interface SymbolicTag {
-  domain: string;
-  context: string;
-  emotional_valence: number;
-  urgency: number;
-}
-
-interface Interpretation {
-  content: string;
-  coherence: number;
-  resonance: number;
-  entanglement: string[];
-}
-
-interface ChamberOutput {
-  chamber: string;
-  tag?: SymbolicTag;
-  interpretations?: Interpretation[];
-  constraints_applied?: string[];
-  coherence_evolution?: number[];
-  final_output?: Interpretation;
-  presence?: object;
-  path_trace?: object;
-}
-
 /**
- * Quick answer generation for poor connectivity
- * Returns instantly without waiting for LLM
+ * LLM integration function for the Temple Engine
+ * Generates meaningful insights for the Holy of Holies chamber
  */
-function generateQuickAnswers(query: string): string[] {
-  const queryLower = query.toLowerCase();
-  
-  // Quick pattern matching for common question types
-  if (queryLower.includes("what is")) {
-    const subject = query.split(/what is/i)[1]?.trim() || "this";
-    return [
-      `${subject} refers to a concept or phenomenon worth exploring from multiple angles.`,
-      `Understanding ${subject} requires examining its properties, origins, and relationships.`,
-      `${subject} can be understood through observation, analysis, and comparison with similar concepts.`,
-    ];
-  }
-  
-  if (queryLower.includes("how does")) {
-    const subject = query.split(/how does/i)[1]?.trim() || "this";
-    return [
-      `The mechanism of ${subject} involves several interconnected processes and feedback loops.`,
-      `${subject} operates through a series of steps that can be understood systematically.`,
-      `Understanding ${subject} requires examining both the components and their interactions.`,
-    ];
-  }
-  
-  if (queryLower.includes("why")) {
-    const subject = query.split(/why/i)[1]?.trim() || "this";
-    return [
-      `The reasons for ${subject} are multifaceted and worth exploring from different perspectives.`,
-      `${subject} occurs due to underlying principles and causal relationships.`,
-      `Understanding ${subject} involves examining motivations, causes, and systemic factors.`,
-    ];
-  }
-  
-  // Default responses for any query
-  return [
-    `${query} is an interesting question that invites analytical examination.`,
-    `${query} can be understood through multiple perspectives and approaches.`,
-    `${query} reveals important insights when examined carefully and thoughtfully.`,
-  ];
-}
-
-/**
- * Detect domain from query
- */
-function detectDomain(query: string): string {
-  const lowerQuery = query.toLowerCase();
-  
-  if (lowerQuery.includes("how") || lowerQuery.includes("why")) return "explanation";
-  if (lowerQuery.includes("what")) return "definition";
-  if (lowerQuery.includes("compare")) return "comparison";
-  if (lowerQuery.includes("should") || lowerQuery.includes("best")) return "recommendation";
-  if (lowerQuery.includes("science") || lowerQuery.includes("physics")) return "science";
-  if (lowerQuery.includes("philosophy") || lowerQuery.includes("meaning")) return "philosophy";
-  if (lowerQuery.includes("technology") || lowerQuery.includes("code")) return "technology";
-  
-  return "general_inquiry";
-}
-
-/**
- * Build chamber outputs from interpretations
- */
-function buildChamberOutputs(
-  query: string,
-  interpretations: string[],
-  emotionalValence: number,
-  urgency: number
-): ChamberOutput[] {
-  const outerCourt: ChamberOutput = {
-    chamber: "outer_court",
-    tag: {
-      domain: detectDomain(query),
-      context: query.substring(0, 150),
-      emotional_valence: emotionalValence,
-      urgency: urgency,
-    },
-    interpretations: [
-      {
-        content: `Query: ${query}`,
-        coherence: 0.7,
-        resonance: 0.7,
-        entanglement: [],
-      },
-    ],
-  };
-
-  const innerCourt: ChamberOutput = {
-    chamber: "inner_court",
-    interpretations: interpretations.map((interp, idx) => ({
-      content: interp,
-      coherence: 0.75 + idx * 0.05,
-      resonance: 0.75 + idx * 0.03,
-      entanglement: [],
-    })),
-    coherence_evolution: [0.65, 0.70, 0.75, 0.80, 0.85],
-  };
-
-  const holyPlace: ChamberOutput = {
-    chamber: "holy_place",
-    constraints_applied: ["coherence_threshold: 0.7", "resonance_alignment"],
-    interpretations: [
-      {
-        content: interpretations[0] || `Understanding: ${query}`,
-        coherence: 0.82,
-        resonance: 0.81,
-        entanglement: [],
-      },
-    ],
-  };
-
-  const holyOfHolies: ChamberOutput = {
-    chamber: "holy_of_holies",
-    final_output: {
-      content: interpretations[0] || `Comprehensive understanding of: ${query}`,
-      coherence: 0.85,
-      resonance: 0.84,
-      entanglement: [],
-    },
-    path_trace: {
-      input: query,
-      chambers_traversed: ["outer_court", "inner_court", "holy_place", "holy_of_holies"],
-      final_collapse_point: "Unified coherent understanding achieved",
-    },
-  };
-
-  return [outerCourt, innerCourt, holyPlace, holyOfHolies];
-}
-
-/**
- * Optimized LLM call with timeout and fallback for poor connectivity
- */
-async function generateTempleEngineOutput(
-  query: string,
-  emotionalValence: number,
-  urgency: number
-): Promise<ChamberOutput[]> {
-  // For poor connectivity: use quick answers immediately
-  const quickAnswers = generateQuickAnswers(query);
-  
+async function llmEnhancedRevelation(essence: any): Promise<any> {
   try {
-    // Try LLM with aggressive 3-second timeout
-    const systemPrompt = `You are a helpful assistant. Answer concisely in 1-2 sentences.`;
-    const userPrompt = `${query}`;
+    const systemPrompt = `You are a mystical oracle channeling deep wisdom through the Temple Engine. 
+    Given the essence of a question, provide a profound yet practical insight that bridges the inner and outer worlds.
+    Keep your response to 2-3 sentences of genuine wisdom.`;
 
-    console.log("[Temple Engine] Attempting LLM call with 3s timeout...");
+    const userPrompt = `The essence seeking revelation: ${JSON.stringify(essence)}
+    
+    Provide a revelation that honors both the depth of the question and the practical world.`;
 
     const response = await Promise.race([
       invokeLLM({
@@ -195,29 +37,22 @@ async function generateTempleEngineOutput(
     ]);
 
     const content = (response as any).choices[0]?.message?.content;
-    let responseText = "";
-    if (typeof content === "string") {
-      responseText = content;
-    } else if (Array.isArray(content)) {
-      responseText = content.map((c: any) => (c.type === "text" ? c.text : "")).join("");
-    }
-
-    if (responseText && responseText.length > 10) {
-      console.log("[Temple Engine] Got LLM response");
-      const interpretations = [responseText, ...quickAnswers.slice(1)];
-      return buildChamberOutputs(query, interpretations, emotionalValence, urgency);
+    if (typeof content === "string" && content.length > 10) {
+      return {
+        llmInsight: content,
+        source: "oracle",
+        enhanced: true,
+      };
     }
   } catch (error) {
-    console.warn("[Temple Engine] LLM call failed or timed out:", (error as any).message);
+    console.warn("[Temple Engine] LLM enhancement failed:", (error as any).message);
   }
 
-  // Fallback to quick answers (instant, no network needed)
-  console.log("[Temple Engine] Using offline-first quick answers");
-  return buildChamberOutputs(query, quickAnswers, emotionalValence, urgency);
+  return null;
 }
 
 export const templeEngineRouter = router({
-  // Process a query through the Temple Engine
+  // Process a query through the unified Temple Engine
   processQuery: protectedProcedure
     .input(
       z.object({
@@ -253,20 +88,26 @@ export const templeEngineRouter = router({
           throw new Error("Failed to extract session ID from insert result");
         }
 
-        // Generate chamber outputs using LLM (with fallback for poor connectivity)
-        const chamberOutputs = await generateTempleEngineOutput(
-          input.query,
-          input.emotionalValence,
-          input.urgency
-        );
+        // Initialize the unified Temple Engine with LLM integration
+        const engine = new TempleEngine({
+          enableDebug: false,
+          llmIntegration: llmEnhancedRevelation,
+        });
+
+        // Process the query through the full journey
+        const journeyTrace: JourneyTrace = await engine.process({
+          query: input.query,
+          emotionalValence: input.emotionalValence,
+          urgency: input.urgency,
+        });
 
         // Save each chamber state to the database
-        for (const output of chamberOutputs) {
+        for (const chamber of journeyTrace.chambers) {
           await saveChamberState(
             sessionId,
-            output.chamber,
-            output,
-            output.coherence_evolution ? output.coherence_evolution[output.coherence_evolution.length - 1] : undefined
+            chamber.id,
+            chamber,
+            undefined
           );
         }
 
@@ -275,7 +116,7 @@ export const templeEngineRouter = router({
           query: input.query,
           emotionalValence: input.emotionalValence,
           urgency: input.urgency,
-          chambers: chamberOutputs,
+          journey: journeyTrace,
         };
       } catch (error) {
         console.error("Error processing query:", error);
