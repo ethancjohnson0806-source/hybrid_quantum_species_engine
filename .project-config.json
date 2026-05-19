@@ -1,0 +1,43 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [
+    "server",
+    "db",
+    "user"
+  ],
+  "dev_command": "pnpm run dev",
+  "env_vars": {
+    "DATABASE_URL": "mysql://3aP5ytWHSUfAujz.root:z3mN3kDqlMV0oM61w1sl@gateway06.us-east-1.prod.aws.tidbcloud.com:4000/QtvYHHr6nnUCNrVdAk89nz?ssl={\"rejectUnauthorized\":true}"
+  },
+  "experiments": [
+    "no_db_push"
+  ],
+  "git_remote": {
+    "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663662381833/QtvYHHr6nnUCNrVdAk89nz",
+    "access_key_id": "ASIAZV3A2ECZGFTSS2OT",
+    "secret_access_key": "4KQmXv3Tshldw4IE/JB/Znxn3fXuE8ndqEMrBNv9",
+    "session_token": "IQoJb3JpZ2luX2VjEAEaCXVzLWVhc3QtMSJIMEYCIQCRnx9ULpqKYmB91ZrWoUPrbzm9qXlEsTNR4oXvKBQaZgIhAKbyJZbKlzCRf2y3CZjMLH2toCXshSSuqkTuHDiuPItVKv8DCMr//////////wEQBBoMNjY1Mzg2MDk4ODY2IgzMot2f02W2mdvXLeQq0wPB7djQurWt9VFwqj/foN1NrZ6sNpnt6cBz6R9Jay2LILJTv4DXODERkNNGblfBe9aXUpuJoh/DZhydtfChh9m96bM0wS9i3Xl98SsvTKDt93jJIXnXWG6fRgMR2UOYcjEZ34Rne0PpA9imughHy83j1jeHshn5IkLz1HwMX8ihQAtpde2qJ9Y+PbaHSk0kkiJhsLAmNr4Lu3BAowOjBjVM2LbMHqdJWwCCmOjx3wxk3fbbzNnEWdKN1y9r3uomQTcBxPgOcPwoFXyAh521TB/y1CXkq4OJoSt7nYa3S6k3maUYytodxH465+HFLBCQ20R7uZDmqI9zV7WuRE4x20rPRLmBsNZkMsaNrrkny20AAdcff4bTteCvFErO4OdeiYWa59OEh0ISR8G/6fHY85S+EMGuJHsHij+eWLCgoAWfOGMRei/5cqVpOzECs4/W53/xba/2wOtx6qw6U4DQzqaLd7G/4w1HZN6x2ew3BCVRnbEPIoF2jypMpHKAjj4yYA4OYSUYNFMXU7ybMm/gPWDzJXS80mOLCtNkTs0Usi4Ao+zbuMXNCnnulmdnMh5JuqvATz6W1Z2nd4H8H6EXf5lHppRll51zutisy1lnvlc1or01MzCB6a7QBjqcAUKLWgtbrTYjCUofnc5Sen3NDQs2i20aFJKV52jrsPO0ViVTrzhYlMynwO7diHfShmX1TAruThQTE/Z9cI5kDsxAJUTIbqRqIsUM1NR32Z2CEIDJBlb8sjnjzQY+QxCrmQHjItMNus0Hnc+drNYwvUWGZKAQ8Y60SQ//IW7Dv/zb8XAiFwaGoFpi3Pxk3gAENeiVPvQZOun0+6r0zA==",
+    "expiration": "2026-05-19T12:53:21.000Z"
+  },
+  "name": "temple_engine_visual",
+  "path": "/home/ubuntu/temple_engine_visual",
+  "port": 3000,
+  "secrets": {
+    "BUILT_IN_FORGE_API_KEY": "aHjixfS77xvqqrcefUaKDE",
+    "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "JWT_SECRET": "KgKgRFir2gSSY7iwt22iFi",
+    "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OWNER_NAME": "Ethan Johnson",
+    "OWNER_OPEN_ID": "2q7eiNugDfjnGjMf6f6KN2",
+    "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
+    "VITE_ANALYTICS_WEBSITE_ID": "a79f3d2f-5b55-4d9b-a261-974f1bfd8f99",
+    "VITE_APP_ID": "QtvYHHr6nnUCNrVdAk89nz",
+    "VITE_APP_LOGO": "",
+    "VITE_APP_TITLE": "Visual Temple - Temple Engine Integration",
+    "VITE_FRONTEND_FORGE_API_KEY": "gUvp5Ds6bKTwYQAKFUiWTT",
+    "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
+    "VITE_OAUTH_PORTAL_URL": "https://manus.im"
+  },
+  "template_id": "web-db-user",
+  "test_command": "pnpm test"
+}
