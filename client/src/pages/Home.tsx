@@ -7,13 +7,13 @@ import { Loader2, Zap } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Streamdown } from "streamdown";
+import { WitnessField } from "@/components/WitnessField";
 
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
   const [query, setQuery] = useState("");
   const [emotionalValence, setEmotionalValence] = useState(0);
   const [urgency, setUrgency] = useState(0.5);
-  const [activeTab, setActiveTab] = useState("input");
 
   const processQueryMutation = trpc.templeEngine.processQuery.useMutation();
   const historyQuery = trpc.templeEngine.getHistory.useQuery(undefined, {
@@ -63,7 +63,7 @@ export default function Home() {
         {/* Main Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Input Panel */}
-          <Card className="lg:col-span-1 bg-purple-900/50 border-gold-500/30 p-6">
+          <Card className="lg:col-span-1 bg-purple-900/50 border-gold-500/30 p-6 h-fit">
             <h2 className="text-xl font-bold text-gold-400 mb-4">Query Input</h2>
             
             <Textarea
@@ -120,6 +120,12 @@ export default function Home() {
 
           {/* Journey Visualization */}
           <div className="lg:col-span-2 space-y-4">
+            {/* Witness Field - Always visible */}
+            <WitnessField 
+              observations={journeyData?.journey.witness || []}
+              isProcessing={processQueryMutation.isPending}
+            />
+
             {journeyData && (
               <>
                 {/* Chamber Flow */}
@@ -129,7 +135,7 @@ export default function Home() {
                     {journeyData.journey.chambers.map((chamber, idx) => (
                       <div
                         key={idx}
-                        className="bg-purple-800/50 border-l-4 border-gold-500 p-4 rounded"
+                        className="bg-purple-800/50 border-l-4 border-gold-500 p-4 rounded animate-in fade-in slide-in-from-left-2 duration-500"
                       >
                         <div className="flex justify-between items-start">
                           <div>
@@ -145,31 +151,15 @@ export default function Home() {
                   </div>
                 </Card>
 
-                {/* Witness Observations */}
-                <Card className="bg-purple-900/50 border-gold-500/30 p-6">
-                  <h2 className="text-xl font-bold text-gold-400 mb-4">Witness Field</h2>
-                  <div className="space-y-2 text-sm">
-                    {journeyData.journey.witness.map((obs, idx) => (
-                      <div key={idx} className="bg-purple-800/50 p-3 rounded flex justify-between">
-                        <span className="text-purple-200">{obs.chamber}</span>
-                        <div className="flex gap-2">
-                          <span className="text-gold-400">{obs.coherence}</span>
-                          <span className="text-purple-300">{obs.resonance}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-
                 {/* Corrections */}
                 {journeyData.journey.corrections.length > 0 && (
                   <Card className="bg-purple-900/50 border-gold-500/30 p-6">
                     <h2 className="text-xl font-bold text-gold-400 mb-4">Recursive Corrections</h2>
                     <div className="space-y-2 text-sm">
                       {journeyData.journey.corrections.map((corr, idx) => (
-                        <div key={idx} className="bg-purple-800/50 p-3 rounded">
+                        <div key={idx} className="bg-purple-800/50 p-3 rounded border-l-2 border-amber-500">
                           <p className="text-purple-200">
-                            {corr.from} → {corr.to}: <span className="text-gold-400">{corr.reason}</span>
+                            {corr.from} → {corr.to}: <span className="text-amber-400 font-semibold">{corr.reason}</span>
                           </p>
                           <p className="text-purple-300 text-xs mt-1">{corr.note}</p>
                         </div>
@@ -181,16 +171,16 @@ export default function Home() {
                 {/* Final Output */}
                 <Card className="bg-purple-900/50 border-gold-500/30 p-6">
                   <h2 className="text-xl font-bold text-gold-400 mb-4">Final Revelation</h2>
-                  <div className="bg-purple-800/50 p-4 rounded text-purple-100">
-                    <Streamdown>
+                  <div className="bg-purple-800/50 p-4 rounded text-purple-100 max-h-64 overflow-y-auto">
+                    <pre className="text-xs whitespace-pre-wrap">
                       {JSON.stringify(journeyData.journey.finalOutput, null, 2)}
-                    </Streamdown>
+                    </pre>
                   </div>
                 </Card>
               </>
             )}
 
-            {!journeyData && (
+            {!journeyData && !processQueryMutation.isPending && (
               <Card className="bg-purple-900/50 border-gold-500/30 p-12 text-center">
                 <p className="text-purple-300">Submit a query to begin the Temple Engine journey</p>
               </Card>
@@ -204,7 +194,7 @@ export default function Home() {
             <h2 className="text-xl font-bold text-gold-400 mb-4">Query History</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {historyQuery.data.map((session: any) => (
-                <div key={session.id} className="bg-purple-800/50 p-4 rounded border border-purple-700">
+                <div key={session.id} className="bg-purple-800/50 p-4 rounded border border-purple-700 hover:border-gold-500/50 transition-colors cursor-pointer">
                   <p className="text-purple-200 text-sm truncate">{session.query}</p>
                   <p className="text-purple-400 text-xs mt-2">
                     {new Date(session.createdAt).toLocaleDateString()}
