@@ -63,7 +63,14 @@ export const templeEngineRouter = router({
         }
 
         // Extract session ID from the insert result
-        const sessionId = (sessionResult as any).insertId || (sessionResult as any)[0];
+        let sessionId: number;
+        if (typeof (sessionResult as any).insertId === 'number') {
+          sessionId = (sessionResult as any).insertId;
+        } else if (Array.isArray(sessionResult) && sessionResult.length > 0) {
+          sessionId = (sessionResult[0] as any).id || (sessionResult[0] as any).insertId;
+        } else {
+          throw new Error('Failed to extract session ID from insert result');
+        }
 
         // Generate chamber outputs using LLM
         const chamberOutputs = await generateTempleEngineOutput(input.query, input.emotionalValence, input.urgency);
@@ -140,104 +147,112 @@ async function generateTempleEngineOutput(
   emotionalValence: number,
   urgency: number
 ): Promise<ChamberOutput[]> {
-  const systemPrompt = `You are the Temple Engine, a sacred cognitive architecture that processes queries through four chambers: Outer Court, Inner Court, Holy Place, and Holy of Holies.
+  const systemPrompt = `You are the Temple Engine, a sacred cognitive architecture that processes queries through four chambers.
 
-For the given query, generate structured JSON outputs for each chamber:
-1. Outer Court: Input tagging with domain detection
-2. Inner Court: Generate multiple interpretations with resonance scoring
-3. Holy Place: Apply constraints and filter interpretations
-4. Holy of Holies: Collapse to final unified state
+For each query, generate thoughtful, substantive interpretations that provide real answers and insights.
 
-Return a JSON array with objects for each chamber containing the specified fields.`;
+Outer Court: Identify the query's domain and context.
+Inner Court: Generate 2-3 distinct interpretations with different perspectives and real content.
+Holy Place: Filter and refine based on coherence and constraints.
+Holy of Holies: Synthesize into a unified, coherent answer.
 
-  const userPrompt = `Process this query through the Temple Engine:
+Return ONLY valid JSON, no markdown or extra text.`;
+
+  const userPrompt = `Process this query through the Temple Engine and provide substantive, meaningful answers:
+
 Query: "${query}"
-Emotional Valence: ${emotionalValence}
-Urgency: ${urgency}
+Emotional Valence: ${emotionalValence} (0=neutral, 1=intense)
+Urgency: ${urgency} (0=exploratory, 1=immediate)
 
-Return a JSON array with four objects (one per chamber) in this exact format:
+Return ONLY valid JSON (no markdown, no code blocks) with this exact structure:
 [
   {
     "chamber": "outer_court",
-    "tag": { "domain": "...", "context": "...", "emotional_valence": ..., "urgency": ... },
-    "interpretations": []
+    "tag": { "domain": "identify the subject domain", "context": "brief context", "emotional_valence": ${emotionalValence}, "urgency": ${urgency} },
+    "interpretations": [{ "content": "initial interpretation of the query", "coherence": 0.7, "resonance": 0.7 }]
   },
   {
     "chamber": "inner_court",
-    "interpretations": [{ "content": "...", "coherence": ..., "resonance": ..., "entanglement": [] }],
-    "coherence_evolution": [0.7, 0.75, 0.8, 0.85, 0.9]
+    "interpretations": [
+      { "content": "first substantive answer/interpretation", "coherence": 0.8, "resonance": 0.8 },
+      { "content": "second perspective or interpretation", "coherence": 0.75, "resonance": 0.75 },
+      { "content": "third angle or consideration", "coherence": 0.78, "resonance": 0.77 }
+    ],
+    "coherence_evolution": [0.65, 0.70, 0.75, 0.80, 0.82]
   },
   {
     "chamber": "holy_place",
-    "constraints_applied": ["..."],
-    "interpretations": [{ "content": "...", "coherence": ..., "resonance": ..., "entanglement": [] }]
+    "constraints_applied": ["coherence_threshold", "resonance_alignment"],
+    "interpretations": [{ "content": "refined synthesis of strongest interpretations", "coherence": 0.82, "resonance": 0.81 }]
   },
   {
     "chamber": "holy_of_holies",
-    "final_output": { "content": "...", "coherence": ..., "resonance": ..., "entanglement": [] },
-    "path_trace": { "input": "...", "chambers_traversed": [...], "final_collapse_point": "..." }
+    "final_output": { "content": "comprehensive final answer that synthesizes all perspectives", "coherence": 0.85, "resonance": 0.84 },
+    "path_trace": { "input": "${query}", "chambers_traversed": ["outer_court", "inner_court", "holy_place", "holy_of_holies"], "final_collapse_point": "unified understanding" }
   }
 ]`;
 
-  try {
-    const response = await invokeLLM({
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "temple_engine_output",
-          strict: false,
-          schema: {
-            type: "object",
-            properties: {
-              chambers: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    chamber: { type: "string" },
-                    tag: { type: "object" },
-                    interpretations: { type: "array" },
-                    constraints_applied: { type: "array" },
-                    coherence_evolution: { type: "array" },
-                    final_output: { type: "object" },
-                    path_trace: { type: "object" },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+  let lastError: Error | null = null;
+  const maxRetries = 2;
 
-    // Parse the LLM response
-    const content = response.choices[0]?.message?.content;
-    let responseText = "{}";
-    if (typeof content === "string") {
-      responseText = content;
-    } else if (Array.isArray(content)) {
-      responseText = content.map((c: any) => (c.type === "text" ? c.text : "")).join("");
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[Temple Engine] Invoking LLM (attempt ${attempt + 1}/${maxRetries + 1})`);
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      });
+
+      // Parse the LLM response
+      const content = response.choices[0]?.message?.content;
+      let responseText = "{}";
+      if (typeof content === "string") {
+        responseText = content;
+      } else if (Array.isArray(content)) {
+        responseText = content.map((c: any) => (c.type === "text" ? c.text : "")).join("");
+      }
+
+      // Clean up markdown code blocks if present
+      responseText = responseText
+        .replace(/^```json\n?/i, "")
+        .replace(/\n?```$/i, "")
+        .trim();
+
+      const parsedResponse = JSON.parse(responseText);
+
+      // Extract chambers array, handling both direct array and nested object
+      let chambers = Array.isArray(parsedResponse) ? parsedResponse : parsedResponse.chambers || [];
+
+      // Validate we have all four chambers with content
+      if (Array.isArray(chambers) && chambers.length === 4) {
+        const hasAllChambers = chambers.every((c: any) => c.chamber && c.interpretations);
+        if (hasAllChambers) {
+          console.log("[Temple Engine] Successfully generated output from LLM");
+          return chambers;
+        }
+      }
+
+      throw new Error("Invalid chamber structure from LLM");
+    } catch (error) {
+      lastError = error as Error;
+      console.warn(`[Temple Engine] LLM attempt ${attempt + 1} failed:`, lastError.message);
+
+      if (attempt < maxRetries) {
+        // Wait before retrying
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
     }
-    const parsedResponse = JSON.parse(responseText);
-
-    // Extract chambers array, handling both direct array and nested object
-    let chambers = Array.isArray(parsedResponse) ? parsedResponse : parsedResponse.chambers || [];
-
-    // Ensure we have all four chambers
-    if (!Array.isArray(chambers) || chambers.length === 0) {
-      chambers = generateDefaultChamberOutputs(query);
-    }
-
-    return chambers;
-  } catch (error) {
-    console.error("Error generating Temple Engine output:", error);
-    // Return default outputs if LLM fails
-    return generateDefaultChamberOutputs(query);
   }
+
+  // If all retries failed, log and use default
+  console.error(
+    "[Temple Engine] All LLM attempts failed, using default outputs:",
+    lastError?.message
+  );
+  return generateDefaultChamberOutputs(query);
 }
 
 /**

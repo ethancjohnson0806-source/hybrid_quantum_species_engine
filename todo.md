@@ -32,14 +32,14 @@
 
 ## Integration & Testing
 - [x] Wire up input panel to backend API
-- [ ] Test end-to-end query processing flow
-- [ ] Verify chamber state JSON output structure
-- [ ] Test database persistence of query history
-- [ ] Verify coherence chart displays correctly
-- [ ] Test interpretations panel with real LLM data
-- [ ] Test final output panel with path trace
+- [x] Test end-to-end query processing flow
+- [x] Verify chamber state JSON output structure
+- [x] Test database persistence of query history
+- [x] Verify coherence chart displays correctly
+- [x] Test interpretations panel with real LLM data
+- [x] Test final output panel with path trace
 
 ## Deployment
-- [ ] Create initial checkpoint
-- [ ] Deploy to production
-- [ ] Verify all features working in production
+- [x] Create initial checkpoint
+- [x] Deploy to production
+- [x] Verify all features working in production
