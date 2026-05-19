@@ -1,0 +1,166 @@
+.temple-visualization-container {
+  width: 100%;
+  padding: 2rem;
+  background: linear-gradient(135deg, #0f0a1a 0%, #1a0f2e 100%);
+  border-radius: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated background */
+.temple-visualization-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.temple-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.chamber-box {
+  position: relative;
+  min-height: 200px;
+  border-radius: 0.75rem;
+  border: 2px solid rgba(168, 85, 247, 0.3);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.chamber-box:hover {
+  border-color: rgba(251, 191, 36, 0.5);
+  transform: translateY(-2px);
+}
+
+.chamber-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.8;
+  z-index: 0;
+}
+
+.chamber-content {
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+}
+
+.chamber-title {
+  font-family: "Georgia", serif;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+}
+
+.chamber-description {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  margin-bottom: 1rem;
+}
+
+/* Flow Indicators */
+.flow-indicators {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin: 1.5rem 0;
+  position: relative;
+  z-index: 1;
+}
+
+.flow-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.3));
+}
+
+/* Processing Status */
+.processing-status {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .temple-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .temple-visualization-container {
+    padding: 1rem;
+  }
+
+  .chamber-box {
+    min-height: 150px;
+  }
+
+  .chamber-content {
+    padding: 1rem;
+  }
+
+  .flow-indicators {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .flow-arrow svg {
+    transform: rotate(90deg);
+  }
+}
+
+/* Glow Effects */
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.chamber-box.active {
+  animation: glow-pulse 1.5s ease-in-out infinite;
+}
+
+/* Sacred Aesthetic - Decorative Borders */
+.chamber-box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 0.75rem;
+  padding: 2px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(168, 85, 247, 0.3) 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.chamber-box:hover::after {
+  opacity: 1;
+}

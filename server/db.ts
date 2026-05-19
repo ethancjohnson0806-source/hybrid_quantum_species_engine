@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, querySessions, chamberStates } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -87,6 +87,102 @@ export async function getUserByOpenId(openId: string) {
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
 
   return result.length > 0 ? result[0] : undefined;
+}
+
+// Query session helpers
+export async function createQuerySession(
+  userId: number,
+  query: string,
+  emotionalValence: number,
+  urgency: number
+) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot create query session: database not available");
+    return undefined;
+  }
+
+  try {
+    const result = await db.insert(querySessions).values({
+      userId,
+      query,
+      emotionalValence: emotionalValence.toString(),
+      urgency: urgency.toString(),
+    });
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to create query session:", error);
+    throw error;
+  }
+}
+
+export async function getQuerySessionsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get query sessions: database not available");
+    return [];
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(querySessions)
+      .where(eq(querySessions.userId, userId))
+      .orderBy(desc(querySessions.createdAt));
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to get query sessions:", error);
+    throw error;
+  }
+}
+
+export async function saveChamberState(
+  sessionId: number,
+  chamberName: string,
+  stateData: object,
+  coherenceScore?: number
+) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot save chamber state: database not available");
+    return undefined;
+  }
+
+  try {
+    const result = await db.insert(chamberStates).values({
+      sessionId,
+      chamberName,
+      stateData: JSON.stringify(stateData),
+      coherenceScore: coherenceScore?.toString(),
+    });
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to save chamber state:", error);
+    throw error;
+  }
+}
+
+export async function getChamberStatesBySessionId(sessionId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get chamber states: database not available");
+    return [];
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(chamberStates)
+      .where(eq(chamberStates.sessionId, sessionId))
+      .orderBy(chamberStates.createdAt);
+    return result.map((state) => ({
+      ...state,
+      stateData: JSON.parse(state.stateData),
+    }));
+  } catch (error) {
+    console.error("[Database] Failed to get chamber states:", error);
+    throw error;
+  }
 }
 
 // TODO: add feature queries here as your schema grows.

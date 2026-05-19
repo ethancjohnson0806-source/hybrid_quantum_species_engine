@@ -25,4 +25,29 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+// Query Sessions - stores user queries and processing results
+export const querySessions = mysqlTable("query_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  query: text("query").notNull(),
+  emotionalValence: varchar("emotionalValence", { length: 10 }).default("0"),
+  urgency: varchar("urgency", { length: 10 }).default("0.5"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type QuerySession = typeof querySessions.$inferSelect;
+export type InsertQuerySession = typeof querySessions.$inferInsert;
+
+// Chamber States - stores the output from each chamber for a query session
+export const chamberStates = mysqlTable("chamber_states", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull(),
+  chamberName: varchar("chamberName", { length: 64 }).notNull(), // "outer_court", "inner_court", "holy_place", "holy_of_holies"
+  stateData: text("stateData").notNull(), // JSON string
+  coherenceScore: varchar("coherenceScore", { length: 10 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ChamberState = typeof chamberStates.$inferSelect;
+export type InsertChamberState = typeof chamberStates.$inferInsert;

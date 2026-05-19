@@ -93,8 +93,8 @@
   --secondary-foreground: oklch(0.7 0.005 65);
   --muted: oklch(0.274 0.006 286.033);
   --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground:  oklch(0.92 0.005 65);
+  --accent: oklch(0.65 0.15 45);
+  --accent-foreground: oklch(0.12 0.01 270);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 10%);
@@ -119,6 +119,21 @@
   }
   body {
     @apply bg-background text-foreground;
+    background: linear-gradient(135deg, #0f0a1a 0%, #1a0f2e 100%);
+  }
+
+  /* Sacred aesthetic - glowing effects */
+  @keyframes glow {
+    0%, 100% {
+      text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+    }
+    50% {
+      text-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+    }
+  }
+
+  .glow-text {
+    animation: glow 3s ease-in-out infinite;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
