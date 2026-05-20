@@ -1,209 +1,321 @@
-import { useAuth } from "@/_core/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Zap } from "lucide-react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { Streamdown } from "streamdown";
-import { WitnessField } from "@/components/WitnessField";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import { Loader2, Zap, Eye, BookOpen } from "lucide-react";
 
+// Type definitions
+interface ChamberState {
+  name: string;
+  inputText: string;
+  outputText: string;
+  metrics: {
+    coherenceScore: number;
+    driftScore: number;
+    symbolicDensity: number;
+    ambiguityScore: number;
+    correctionCount: number;
+  };
+  recursionDepth: number;
+  enteredAt: Date;
+  exitedAt?: Date;
+}
+
+interface WitnessState {
+  overallCoherence: number;
+  overallDrift: number;
+  overallSymbolicDensity: number;
+  alignmentScore: number;
+  activeChamber: string;
+  recursionDepth: number;
+  totalCorrections: number;
+}
+
+interface JourneyTrace {
+  userQuery: string;
+  chambers: ChamberState[];
+  witnessState: WitnessState;
+  corrections: any[];
+  finalAnswer: string;
+  status: "completed" | "error";
+}
+
+// Shared Components
+
+function MetricGauge({ label, value }: { label: string; value: number }) {
+  const percentage = Math.round(value * 100);
+  const color = value > 0.7 ? "bg-green-500" : value > 0.4 ? "bg-yellow-500" : "bg-red-500";
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between text-sm">
+        <span className="text-gray-400">{label}</span>
+        <span className="text-white font-semibold">{percentage}%</span>
+      </div>
+      <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+        <div className={`${color} h-full transition-all duration-300`} style={{ width: `${percentage}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function ChamberCard({ chamber }: { chamber: ChamberState }) {
+  return (
+    <Card className="bg-gradient-to-br from-purple-900/50 to-indigo-900/50 border-purple-500/30">
+      <CardHeader>
+        <CardTitle className="text-lg text-purple-200">{chamber.name}</CardTitle>
+        <CardDescription>Recursion Depth: {chamber.recursionDepth}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <p className="text-sm text-gray-400 mb-2">Input:</p>
+          <p className="text-sm text-gray-200 line-clamp-2">{chamber.inputText}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-400 mb-2">Output:</p>
+          <p className="text-sm text-gray-200 line-clamp-3">{chamber.outputText}</p>
+        </div>
+        <div className="space-y-2">
+          <MetricGauge label="Coherence" value={chamber.metrics.coherenceScore} />
+          <MetricGauge label="Drift" value={1 - chamber.metrics.driftScore} />
+          <MetricGauge label="Clarity" value={1 - chamber.metrics.ambiguityScore} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CorrectionCard({ correction }: { correction: any }) {
+  return (
+    <Card className="bg-gradient-to-br from-red-900/30 to-orange-900/30 border-red-500/30">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-sm text-red-200">{correction.chamberName}</CardTitle>
+            <CardDescription>{correction.reason}</CardDescription>
+          </div>
+          <Badge variant={correction.severity === "major" ? "destructive" : "secondary"}>
+            {correction.severity}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        <p className="text-gray-300">{correction.deltaSummary}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Main Home Component
 export default function Home() {
-  const { user, loading, isAuthenticated } = useAuth();
-  const [query, setQuery] = useState("");
-  const [emotionalValence, setEmotionalValence] = useState(0);
+  const { user, isAuthenticated } = useAuth();
+  const [userQuery, setUserQuery] = useState("");
+  const [emotionalValence, setEmotionalValence] = useState(0.5);
   const [urgency, setUrgency] = useState(0.5);
+  const [journey, setJourney] = useState<JourneyTrace | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [activeTab, setActiveTab] = useState("input");
 
-  const processQueryMutation = trpc.templeEngine.processQuery.useMutation();
-  const historyQuery = trpc.templeEngine.getHistory.useQuery(undefined, {
-    enabled: isAuthenticated,
+  const processQueryMutation = trpc.templeEngine.processQuery.useMutation({
+    onSuccess: (data) => {
+      setJourney(data.journey);
+      setIsProcessing(false);
+      setActiveTab("chambers");
+    },
+    onError: (error) => {
+      console.error("Error:", error);
+      setIsProcessing(false);
+    },
   });
 
-  const handleProcess = async () => {
-    if (!query.trim()) return;
-    await processQueryMutation.mutateAsync({
-      query,
-      emotionalValence,
-      urgency,
-    });
+  const handleProcessQuery = async () => {
+    if (!userQuery.trim()) return;
+    setIsProcessing(true);
+    processQueryMutation.mutate({ userQuery });
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-950 via-black to-purple-900 flex items-center justify-center">
-        <Loader2 className="animate-spin text-gold-400" size={48} />
-      </div>
-    );
-  }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-950 via-black to-purple-900 flex flex-col items-center justify-center">
-        <h1 className="text-5xl font-bold text-gold-400 mb-4">Integrated Temple Engine</h1>
-        <p className="text-purple-200 mb-8">A mystical, unified query processing visualizer</p>
-        <Button className="bg-gold-500 hover:bg-gold-600 text-black font-bold">
-          Sign In to Begin
-        </Button>
+      <div className="min-h-screen bg-gradient-to-br from-purple-950 via-black to-indigo-950 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-purple-200 mb-4">Integrated Temple Engine</h1>
+          <p className="text-gray-400">Please sign in to continue</p>
+        </div>
       </div>
     );
   }
 
-  const journeyData = processQueryMutation.data;
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-950 via-black to-purple-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-black to-indigo-950 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gold-400 mb-2">Temple Engine</h1>
-          <p className="text-purple-200">Unified consciousness processing through sacred chambers</p>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-purple-200 mb-2">Integrated Temple Engine</h1>
+          <p className="text-gray-400">A mystical, unified query processing visualizer</p>
         </div>
 
-        {/* Main Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Input Panel */}
-          <Card className="lg:col-span-1 bg-purple-900/50 border-gold-500/30 p-6 h-fit">
-            <h2 className="text-xl font-bold text-gold-400 mb-4">Query Input</h2>
-            
-            <Textarea
-              placeholder="Enter your query..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="bg-purple-800/50 border-purple-600 text-white mb-4 h-24"
-            />
+        {/* Main Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-purple-900/30 border border-purple-500/30">
+            <TabsTrigger value="input">Input</TabsTrigger>
+            <TabsTrigger value="chambers" disabled={!journey}>
+              Chambers
+            </TabsTrigger>
+            <TabsTrigger value="witness" disabled={!journey}>
+              Witness Field
+            </TabsTrigger>
+            <TabsTrigger value="corrections" disabled={!journey || journey.corrections.length === 0}>
+              Corrections
+            </TabsTrigger>
+          </TabsList>
 
-            <div className="space-y-4">
-              <div>
-                <label className="text-purple-200 text-sm">Emotional Valence: {emotionalValence.toFixed(2)}</label>
-                <Slider
-                  value={[emotionalValence]}
-                  onValueChange={(val) => setEmotionalValence(val[0])}
-                  min={-1}
-                  max={1}
-                  step={0.1}
-                  className="w-full"
-                />
-              </div>
+          {/* Input Tab */}
+          <TabsContent value="input" className="space-y-6">
+            <Card className="bg-gradient-to-br from-purple-900/50 to-indigo-900/50 border-purple-500/30">
+              <CardHeader>
+                <CardTitle>Submit a Query</CardTitle>
+                <CardDescription>Enter your question for the Temple Engine to process</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <label className="text-sm font-medium text-gray-300 mb-2 block">Your Query</label>
+                  <Textarea
+                    placeholder="What is consciousness? How does learning work? Why do we dream?"
+                    value={userQuery}
+                    onChange={(e) => setUserQuery(e.target.value)}
+                    className="bg-gray-900/50 border-purple-500/30 text-gray-100 placeholder-gray-500"
+                    rows={4}
+                  />
+                </div>
 
-              <div>
-                <label className="text-purple-200 text-sm">Urgency: {urgency.toFixed(2)}</label>
-                <Slider
-                  value={[urgency]}
-                  onValueChange={(val) => setUrgency(val[0])}
-                  min={0}
-                  max={1}
-                  step={0.1}
-                  className="w-full"
-                />
-              </div>
-            </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-sm font-medium text-gray-300 mb-2 block">
+                      Emotional Valence: {Math.round(emotionalValence * 100)}%
+                    </label>
+                    <Slider
+                      value={[emotionalValence]}
+                      onValueChange={(value) => setEmotionalValence(value[0])}
+                      min={0}
+                      max={1}
+                      step={0.1}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-300 mb-2 block">
+                      Urgency: {Math.round(urgency * 100)}%
+                    </label>
+                    <Slider
+                      value={[urgency]}
+                      onValueChange={(value) => setUrgency(value[0])}
+                      min={0}
+                      max={1}
+                      step={0.1}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
 
-            <Button
-              onClick={handleProcess}
-              disabled={processQueryMutation.isPending || !query.trim()}
-              className="w-full mt-6 bg-gold-500 hover:bg-gold-600 text-black font-bold"
-            >
-              {processQueryMutation.isPending ? (
-                <>
-                  <Loader2 className="animate-spin mr-2" size={16} />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Zap className="mr-2" size={16} />
-                  Process Query
-                </>
-              )}
-            </Button>
-          </Card>
+                <Button
+                  onClick={handleProcessQuery}
+                  disabled={isProcessing || !userQuery.trim()}
+                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="mr-2 h-4 w-4" />
+                      Process Query
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-          {/* Journey Visualization */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Witness Field - Always visible */}
-            <WitnessField 
-              observations={journeyData?.journey.witness || []}
-              isProcessing={processQueryMutation.isPending}
-            />
-
-            {journeyData && (
+          {/* Chambers Tab */}
+          <TabsContent value="chambers" className="space-y-6">
+            {journey && (
               <>
-                {/* Chamber Flow */}
-                <Card className="bg-purple-900/50 border-gold-500/30 p-6">
-                  <h2 className="text-xl font-bold text-gold-400 mb-4">Chamber Journey</h2>
-                  <div className="space-y-3">
-                    {journeyData.journey.chambers.map((chamber, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-purple-800/50 border-l-4 border-gold-500 p-4 rounded animate-in fade-in slide-in-from-left-2 duration-500"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="text-gold-400 font-bold">{chamber.id}</h3>
-                            <p className="text-purple-200 text-sm">{chamber.description}</p>
-                          </div>
-                          <span className="text-xs bg-purple-700 text-gold-300 px-2 py-1 rounded">
-                            {chamber.phenomenology}
-                          </span>
-                        </div>
-                      </div>
+                <Card className="bg-gradient-to-br from-purple-900/50 to-indigo-900/50 border-purple-500/30">
+                  <CardHeader>
+                    <CardTitle>Final Answer</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-100 leading-relaxed">{journey.finalAnswer}</p>
+                  </CardContent>
+                </Card>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-purple-200 mb-4">Chamber Pipeline</h3>
+                  <div className="grid gap-4">
+                    {journey.chambers.map((chamber, idx) => (
+                      <ChamberCard key={idx} chamber={chamber} />
                     ))}
                   </div>
-                </Card>
-
-                {/* Corrections */}
-                {journeyData.journey.corrections.length > 0 && (
-                  <Card className="bg-purple-900/50 border-gold-500/30 p-6">
-                    <h2 className="text-xl font-bold text-gold-400 mb-4">Recursive Corrections</h2>
-                    <div className="space-y-2 text-sm">
-                      {journeyData.journey.corrections.map((corr, idx) => (
-                        <div key={idx} className="bg-purple-800/50 p-3 rounded border-l-2 border-amber-500">
-                          <p className="text-purple-200">
-                            {corr.from} → {corr.to}: <span className="text-amber-400 font-semibold">{corr.reason}</span>
-                          </p>
-                          <p className="text-purple-300 text-xs mt-1">{corr.note}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                )}
-
-                {/* Final Output */}
-                <Card className="bg-purple-900/50 border-gold-500/30 p-6">
-                  <h2 className="text-xl font-bold text-gold-400 mb-4">Final Revelation</h2>
-                  <div className="bg-purple-800/50 p-4 rounded text-purple-100 max-h-64 overflow-y-auto">
-                    <pre className="text-xs whitespace-pre-wrap">
-                      {JSON.stringify(journeyData.journey.finalOutput, null, 2)}
-                    </pre>
-                  </div>
-                </Card>
+                </div>
               </>
             )}
+          </TabsContent>
 
-            {!journeyData && !processQueryMutation.isPending && (
-              <Card className="bg-purple-900/50 border-gold-500/30 p-12 text-center">
-                <p className="text-purple-300">Submit a query to begin the Temple Engine journey</p>
+          {/* Witness Field Tab */}
+          <TabsContent value="witness" className="space-y-6">
+            {journey && (
+              <Card className="bg-gradient-to-br from-purple-900/50 to-indigo-900/50 border-purple-500/30">
+                <CardHeader>
+                  <CardTitle>Witness Field Metrics</CardTitle>
+                  <CardDescription>Real-time observation of the reasoning process</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-2 gap-6">
+                    <MetricGauge label="Overall Coherence" value={journey.witnessState.overallCoherence} />
+                    <MetricGauge label="Alignment Score" value={journey.witnessState.alignmentScore} />
+                    <MetricGauge label="Clarity" value={1 - journey.witnessState.overallDrift} />
+                    <MetricGauge label="Symbolic Density" value={journey.witnessState.overallSymbolicDensity} />
+                  </div>
+
+                  <div className="pt-4 border-t border-purple-500/30 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Active Chamber</span>
+                      <span className="text-purple-200 font-semibold">{journey.witnessState.activeChamber}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Recursion Depth</span>
+                      <span className="text-purple-200 font-semibold">{journey.witnessState.recursionDepth}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Total Corrections</span>
+                      <span className="text-purple-200 font-semibold">{journey.witnessState.totalCorrections}</span>
+                    </div>
+                  </div>
+                </CardContent>
               </Card>
             )}
-          </div>
-        </div>
+          </TabsContent>
 
-        {/* History */}
-        {historyQuery.data && historyQuery.data.length > 0 && (
-          <Card className="mt-8 bg-purple-900/50 border-gold-500/30 p-6">
-            <h2 className="text-xl font-bold text-gold-400 mb-4">Query History</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {historyQuery.data.map((session: any) => (
-                <div key={session.id} className="bg-purple-800/50 p-4 rounded border border-purple-700 hover:border-gold-500/50 transition-colors cursor-pointer">
-                  <p className="text-purple-200 text-sm truncate">{session.query}</p>
-                  <p className="text-purple-400 text-xs mt-2">
-                    {new Date(session.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
+          {/* Corrections Tab */}
+          <TabsContent value="corrections" className="space-y-6">
+            {journey && journey.corrections.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-purple-200">Correction Journal</h3>
+                {journey.corrections.map((correction, idx) => (
+                  <CorrectionCard key={idx} correction={correction} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

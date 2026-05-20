@@ -479,12 +479,25 @@ export class TempleEngine {
 
   private formRevelation(essence: any): any {
     return {
-      insight: `Revelation based on: ${JSON.stringify(essence)}`,
+      insight: "Awaiting revelation...",
       meta: { source: "TempleEngine", stage: "HOLY_OF_HOLIES" },
     };
   }
 
   private expressRevelation(revelation: any): any {
+    // If LLM provided an insight, use it
+    if (revelation?.llmEnhanced?.llmInsight) {
+      return {
+        message: revelation.llmEnhanced.llmInsight,
+        meta: {
+          ...revelation?.meta,
+          source: "oracle",
+          enhanced: true,
+        },
+      };
+    }
+    
+    // Otherwise use the default insight
     return {
       message: revelation?.insight ?? revelation,
       meta: revelation?.meta ?? {},

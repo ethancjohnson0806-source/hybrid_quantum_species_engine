@@ -1,45 +1,54 @@
-# Integrated Temple Engine - Project TODO
+# Temple Engine - Complete Recursive Implementation
 
-## Database & Backend
-- [x] Create query_sessions table to store user query history
-- [x] Create chamber_states table to store per-chamber processing results
-- [x] Create database queries in server/db.ts for session and state management
-- [x] Implement Temple Engine processing backend API (tRPC procedure)
-- [x] Integrate LLM for generating interpretations and chamber outputs
-- [x] Add JSON output formatting for chamber states
+## Phase 1: Core Data Structures & Database Schema
+- [ ] Create QuerySession table (id, user_query, created_at, status, final_answer)
+- [ ] Create ChamberState table (id, session_id, chamber_name, input_text, output_text, entered_at, exited_at)
+- [ ] Create ChamberMetrics table (id, chamber_state_id, coherence_score, drift_score, symbolic_density, ambiguity_score, recursion_depth, correction_count)
+- [ ] Create WitnessState table (id, session_id, overall_coherence, overall_drift, overall_symbolic_density, alignment_score, active_chamber, recursion_depth, total_corrections)
+- [ ] Create CorrectionEvent table (id, session_id, chamber_name, reason, severity, previous_output, corrected_output, delta_summary, timestamp)
+- [ ] Generate and apply database migrations
 
-## Frontend - Core Components
-- [x] Create TempleVisualization component (four-chamber layout)
-- [x] Create InputPanel component (query input, emotional valence, urgency sliders)
-- [x] Create ChamberStateDisplay component (JSON output for each chamber)
-- [x] Create CoherenceEvolutionChart component (line chart for Inner Court iterations)
-- [x] Create InterpretationsPanel component (list of interpretations with scores)
-- [x] Create FinalOutputPanel component (collapsed state + path trace)
-- [x] Create ProcessingHistoryLog component (previous queries and results)
+## Phase 2: Chamber Pipeline with Recursion
+- [ ] Implement Surface Chamber (normalize query, extract intent, entities, constraints)
+- [ ] Implement Descent Chamber (break into sub-questions, identify knowledge domains)
+- [ ] Implement Compression Chamber (generate candidate answers, compress to internal representation)
+- [ ] Implement Expansion Chamber (turn compressed representation into readable answer)
+- [ ] Implement Return Chamber (finalize answer, integrate corrections)
+- [ ] Implement recursion logic (re-entry to chambers, recursion_depth tracking)
+- [ ] Implement correction context passing between chambers
 
-## Frontend - Animations & Interactions
-- [x] Implement animated transitions between chambers
-- [x] Add real-time step-by-step processing flow visualization
-- [x] Create glowing accent effects for sacred aesthetic
-- [x] Implement smooth state transitions and loading states
+## Phase 3: Witness Field & Correction Journal
+- [ ] Implement Witness Field metrics computation per chamber
+- [ ] Implement WitnessState aggregation logic
+- [ ] Implement correction triggering logic (coherence < 0.6, drift > 0.4, alignment < 0.6)
+- [ ] Implement CorrectionEvent creation and persistence
+- [ ] Implement correction journal indexing and retrieval
+- [ ] Implement meta-analysis queries (common reasons, chamber correction rates)
 
-## Frontend - Layout & Styling
-- [x] Design dark-themed UI with deep purples, golds, and glowing accents
-- [x] Create responsive layout for desktop and mobile
-- [x] Style the four-chamber visualization with sacred aesthetic
-- [x] Apply consistent theming across all components
-- [x] Add mystical visual effects (glows, shadows, animations)
+## Phase 4: API Contract Endpoints
+- [ ] POST /api/temple-engine/session (create new session)
+- [ ] GET /api/temple-engine/session/{session_id} (get full session state)
+- [ ] GET /api/temple-engine/session/{session_id}/stream (SSE for real-time updates)
+- [ ] POST /api/temple-engine/session/{session_id}/feedback (submit user corrections)
+- [ ] GET /api/temple-engine/session/{session_id}/corrections (get correction journal)
+- [ ] Implement SSE events (chamber_started, chamber_completed, witness_updated, correction_triggered, recursion_entered, session_completed)
 
-## Integration & Testing
-- [x] Wire up input panel to backend API
-- [x] Test end-to-end query processing flow
-- [x] Verify chamber state JSON output structure
-- [x] Test database persistence of query history
-- [x] Verify coherence chart displays correctly
-- [x] Test interpretations panel with real LLM data
-- [x] Test final output panel with path trace
+## Phase 5: UI Component Tree
+- [ ] Implement AppRoot layout
+- [ ] Implement HeaderBar and FooterStatusBar
+- [ ] Implement SidebarNavigation and ContentArea
+- [ ] Implement ChamberFlowScreen with ChamberTransitionGraph
+- [ ] Implement WitnessFieldScreen with metrics visualization
+- [ ] Implement CorrectionJournalScreen with timeline
+- [ ] Implement shared components (MetricGauge, Badge, Tag, DiffViewer, AnimatedArc, RippleEffect, GlowPulse)
+- [ ] Implement StateProviders (SessionStateProvider, WitnessStateProvider, CorrectionJournalProvider)
+- [ ] Wire components to API endpoints
 
-## Deployment
-- [x] Create initial checkpoint
-- [x] Deploy to production
-- [x] Verify all features working in production
+## Phase 6: Testing & Deployment
+- [ ] End-to-end test of complete pipeline
+- [ ] Test recursion and correction logic
+- [ ] Test Witness Field metric computation
+- [ ] Test API endpoints
+- [ ] Test UI data binding
+- [ ] Save checkpoint
+- [ ] Deploy to production
