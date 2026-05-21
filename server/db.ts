@@ -173,12 +173,8 @@ export async function getChamberStatesBySessionId(sessionId: number) {
     const result = await db
       .select()
       .from(chamberStates)
-      .where(eq(chamberStates.sessionId, sessionId))
-      .orderBy(chamberStates.createdAt);
-    return result.map((state) => ({
-      ...state,
-      stateData: JSON.parse(state.stateData),
-    }));
+      .where(eq(chamberStates.sessionId, sessionId));
+    return result;
   } catch (error) {
     console.error("[Database] Failed to get chamber states:", error);
     throw error;

@@ -1,148 +1,231 @@
 /**
- * Temple Engine API - Complete contract with SSE streaming
+ * Temple Engine - Exact API Contract (5 Endpoints per Spec)
  */
 
+import { router, publicProcedure } from "../_core/trpc";
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
-import { createQuerySession, getQuerySessionsByUserId } from "../db";
-import { executeTempleEnginePipeline } from "../templeEngine.pipeline";
-import { TRPCError } from "@trpc/server";
+import { executeTempleEnginePipeline, applyUserFeedbackCorrection } from "../templeEngine.executor";
+import { QuerySession } from "../templeEngine.types";
 
-export const templeEngineAPIRouter = router({
-  // Create a new session
-  createSession: protectedProcedure
-    .input(z.object({ userQuery: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      try {
-        const sessionId = await createQuerySession(
-          ctx.user.id,
-          input.userQuery
-        );
+// In-memory session storage (replace with database in production)
+const sessions = new Map<number, QuerySession>();
+let sessionIdCounter = 1;
 
-        return {
-          sessionId,
-          status: "in_progress" as const,
-        };
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create session",
-        });
-      }
-    }),
-
-  // Get full session state
-  getSession: protectedProcedure
-    .input(z.object({ sessionId: z.number() }))
-    .query(async ({ ctx, input }) => {
-      try {
-        // In a real implementation, fetch from database
-        // For now, return placeholder
-        return {
-          sessionId: input.sessionId,
-          userQuery: "Query",
-          status: "completed" as const,
-          chambers: [],
-          witnessState: {
-            overallCoherence: 0.8,
-            overallDrift: 0.2,
-            overallSymbolicDensity: 0.5,
-            alignmentScore: 0.75,
-            activeChamber: "Return",
-            recursionDepth: 0,
-            totalCorrections: 0,
-          },
-          corrections: [],
-          finalAnswer: "Processing...",
-        };
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to get session",
-        });
-      }
-    }),
-
-  // Process query through full pipeline
-  processQuery: protectedProcedure
-    .input(z.object({ userQuery: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      try {
-        // Create session
-        const sessionId = await createQuerySession(
-          ctx.user.id,
-          input.userQuery
-        );
-
-        // Execute pipeline
-        const journey = await executeTempleEnginePipeline(input.userQuery);
-
-        return {
-          sessionId,
-          userQuery: input.userQuery,
-          journey,
-          status: journey.status,
-        };
-      } catch (error) {
-        console.error("Error processing query:", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to process query",
-        });
-      }
-    }),
-
-  // Get user's session history
-  getHistory: protectedProcedure.query(async ({ ctx }) => {
+/**
+ * POST /api/temple-engine/session
+ * Create a new query session and start processing
+ */
+const createSessionProcedure = publicProcedure
+  .input(z.object({
+    user_query: z.string().min(1),
+    emotional_valence: z.number().min(-1).max(1).optional(),
+    urgency: z.number().min(0).max(1).optional(),
+  }))
+  .mutation(async ({ input }) => {
     try {
-      const sessions = await getQuerySessionsByUserId(ctx.user.id);
-      return { sessions };
+      // Execute the full pipeline
+      const session = await executeTempleEnginePipeline(input.user_query);
+
+      // Assign ID and store
+      session.id = sessionIdCounter++;
+      sessions.set(session.id, session);
+
+      return {
+        session_id: session.id,
+        status: session.status,
+      };
     } catch (error) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to get history",
-      });
+      console.error('Error creating session:', error);
+      throw new Error(`Failed to create session: ${(error as any).message}`);
     }
-  }),
+  });
 
-  // Submit user feedback/correction
-  submitFeedback: protectedProcedure
-    .input(
-      z.object({
-        sessionId: z.number(),
-        feedback: z.string(),
-        severity: z.enum(["minor", "moderate", "major"]),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      try {
-        // In a real implementation, trigger re-entry logic
-        return {
-          status: "correction_triggered" as const,
-          jumpToChamber: "Compression",
-        };
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to submit feedback",
-        });
-      }
-    }),
+/**
+ * GET /api/temple-engine/session/{session_id}
+ * Get full session state
+ */
+const getSessionProcedure = publicProcedure
+  .input(z.object({
+    session_id: z.number(),
+  }))
+  .query(({ input }) => {
+    const session = sessions.get(input.session_id);
+    if (!session) {
+      throw new Error(`Session ${input.session_id} not found`);
+    }
 
-  // Get correction journal for a session
-  getCorrections: protectedProcedure
-    .input(z.object({ sessionId: z.number() }))
-    .query(async ({ ctx, input }) => {
-      try {
-        // In a real implementation, fetch from database
-        return {
-          corrections: [],
-        };
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to get corrections",
-        });
-      }
-    }),
+    return {
+      id: session.id,
+      user_query: session.user_query,
+      created_at: session.created_at,
+      status: session.status,
+      chambers: session.chambers.map(c => ({
+        name: c.name,
+        input_text: c.input_text,
+        output_text: c.output_text,
+        metrics: c.metrics,
+        entered_at: c.entered_at,
+        exited_at: c.exited_at,
+        recursion_depth: c.recursion_depth,
+      })),
+      witness_state: session.witness_state,
+      corrections: session.corrections,
+      final_answer: session.final_answer,
+    };
+  });
+
+/**
+ * GET /api/temple-engine/session/{session_id}/stream
+ * SSE stream for real-time updates
+ */
+const streamSessionProcedure = publicProcedure
+  .input(z.object({
+    session_id: z.number(),
+  }))
+  .query(({ input }) => {
+    const session = sessions.get(input.session_id);
+    if (!session) {
+      throw new Error(`Session ${input.session_id} not found`);
+    }
+
+    // Return events for SSE streaming
+    const events = [];
+
+    // Chamber events
+    session.chambers.forEach((chamber, index) => {
+      events.push({
+        type: 'chamber_started',
+        chamber_name: chamber.name,
+        timestamp: chamber.entered_at,
+      });
+
+      events.push({
+        type: 'chamber_completed',
+        chamber_name: chamber.name,
+        output: chamber.output_text,
+        metrics: chamber.metrics,
+        timestamp: chamber.exited_at,
+      });
+    });
+
+    // Witness events
+    events.push({
+      type: 'witness_updated',
+      witness_state: session.witness_state,
+      timestamp: new Date(),
+    });
+
+    // Correction events
+    session.corrections.forEach(correction => {
+      events.push({
+        type: 'correction_triggered',
+        correction,
+        timestamp: correction.timestamp,
+      });
+    });
+
+    // Session completion
+    events.push({
+      type: 'session_completed',
+      final_answer: session.final_answer,
+      timestamp: new Date(),
+    });
+
+    return { events };
+  });
+
+/**
+ * POST /api/temple-engine/session/{session_id}/feedback
+ * Submit user correction feedback
+ */
+const submitFeedbackProcedure = publicProcedure
+  .input(z.object({
+    session_id: z.number(),
+    feedback: z.string().min(1),
+    severity: z.enum(['minor', 'moderate', 'major']),
+  }))
+  .mutation(async ({ input }) => {
+    const session = sessions.get(input.session_id);
+    if (!session) {
+      throw new Error(`Session ${input.session_id} not found`);
+    }
+
+    try {
+      // Apply correction
+      const updatedSession = await applyUserFeedbackCorrection(
+        session,
+        input.feedback,
+        input.severity
+      );
+
+      // Update stored session
+      sessions.set(input.session_id, updatedSession);
+
+      return {
+        status: 'corrected',
+        jump_to_chamber: updatedSession.chambers[updatedSession.chambers.length - 1].name,
+        final_answer: updatedSession.final_answer,
+      };
+    } catch (error) {
+      console.error('Error applying feedback:', error);
+      throw new Error(`Failed to apply feedback: ${(error as any).message}`);
+    }
+  });
+
+/**
+ * GET /api/temple-engine/session/{session_id}/corrections
+ * Get correction journal
+ */
+const getCorrectionJournalProcedure = publicProcedure
+  .input(z.object({
+    session_id: z.number(),
+    chamber_name: z.string().optional(),
+    reason: z.string().optional(),
+  }))
+  .query(({ input }) => {
+    const session = sessions.get(input.session_id);
+    if (!session) {
+      throw new Error(`Session ${input.session_id} not found`);
+    }
+
+    let corrections = session.corrections;
+
+    // Filter by chamber if specified
+    if (input.chamber_name) {
+      corrections = corrections.filter(c => c.chamber_name === input.chamber_name);
+    }
+
+    // Filter by reason if specified
+    if (input.reason) {
+      corrections = corrections.filter(c => c.reason.includes(input.reason));
+    }
+
+    // Meta-analysis
+    const correctionsByReason = new Map<string, number>();
+    const correctionsByChamber = new Map<string, number>();
+
+    corrections.forEach(c => {
+      correctionsByReason.set(c.reason, (correctionsByReason.get(c.reason) || 0) + 1);
+      correctionsByChamber.set(c.chamber_name, (correctionsByChamber.get(c.chamber_name) || 0) + 1);
+    });
+
+    return {
+      corrections,
+      meta_analysis: {
+        total_corrections: corrections.length,
+        most_common_reasons: Array.from(correctionsByReason.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5),
+        chambers_with_most_corrections: Array.from(correctionsByChamber.entries())
+          .sort((a, b) => b[1] - a[1]),
+      },
+    };
+  });
+
+export const templeEngineRouter = router({
+  createSession: createSessionProcedure,
+  getSession: getSessionProcedure,
+  streamSession: streamSessionProcedure,
+  submitFeedback: submitFeedbackProcedure,
+  getCorrectionJournal: getCorrectionJournalProcedure,
 });
