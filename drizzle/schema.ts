@@ -76,6 +76,18 @@ export const correctionEvents = mysqlTable("correction_events", {
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
+// QuantumRuns - stores results from quantum algorithm executions
+export const quantumRuns = mysqlTable("quantum_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  algorithm: varchar("algorithm", { length: 64 }).notNull(), // VQE, QAOA, Grover
+  numQubits: int("num_qubits").notNull(),
+  iterations: int("iterations").notNull(),
+  result: text("result"), // JSON stringified result
+  executionTime: decimal("execution_time", { precision: 10, scale: 6 }).notNull(), // in seconds
+  status: mysqlEnum("status", ["pending", "completed", "failed"]).default("pending").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
@@ -94,3 +106,6 @@ export type InsertWitnessState = typeof witnessStates.$inferInsert;
 
 export type CorrectionEvent = typeof correctionEvents.$inferSelect;
 export type InsertCorrectionEvent = typeof correctionEvents.$inferInsert;
+
+export type QuantumRun = typeof quantumRuns.$inferSelect;
+export type InsertQuantumRun = typeof quantumRuns.$inferInsert;

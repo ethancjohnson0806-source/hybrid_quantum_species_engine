@@ -152,6 +152,13 @@ function HomeContent() {
         >
           Correction Journal
         </button>
+        <button
+          className="tab"
+          onClick={() => window.location.href = "/quantum-lab"}
+          style={{ marginLeft: 'auto' }}
+        >
+          Quantum Lab →
+        </button>
       </div>
 
       {session?.final_answer && (
