@@ -1038,3 +1038,33 @@ await createInvite.mutateAsync({ eventId: "123", origin: window.location.origin 
 // Backend - use input.origin to build the URL
 const inviteUrl = `${input.origin}/events/${eventId}/join?token=${token}`;
 ```
+
+
+---
+
+## 📄 License & Attribution
+
+This project integrates the following open-source components:
+
+### Legitimate Quantum Engine
+- **License:** MIT License
+- **Copyright:** (c) 2026 ethancjohnson0806-source
+- **Repository:** https://github.com/ethancjohnson0806-source/Legitimate-Quantum-Engine
+- **Description:** A quantum simulator supporting VQE, QAOA, and Grover algorithms
+
+### Temple Engine (TempleVisu)
+- **License:** MIT License
+- **Built with:** React 19, TypeScript, tRPC, Tailwind CSS 4, Express 4, Drizzle ORM
+
+All components are licensed under the MIT License. See individual LICENSE files for full terms.
+
+### MIT License Summary
+You are free to:
+- Use this software for any purpose
+- Copy, modify, and distribute the software
+- Use it commercially and privately
+
+Conditions:
+- Include the original copyright notice and license in any copies or substantial portions of the software
+
+---
