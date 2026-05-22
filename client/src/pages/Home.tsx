@@ -51,9 +51,9 @@ function HomeContent() {
     },
   });
 
-  const processQuery = async () => {
+  const processQuery = () => {
     if (!query.trim()) return;
-    await processQueryMutation.mutateAsync({
+    processQueryMutation.mutate({
       user_query: query,
       emotional_valence: emotionalValence,
       urgency: urgency,
