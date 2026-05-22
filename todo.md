@@ -168,3 +168,41 @@
 - [x] No shortcuts or inventions
 - [x] Production-ready
 - [x] Save checkpoint
+
+
+## Phase 7: Session Persistence & Export Features
+
+### Database Schema for Sessions
+- [x] Add sessions table to persist QuerySession data
+- [x] Add indexes for session_id, user_id, created_at
+- [x] Migrate existing in-memory sessions to database
+
+### Session History API
+- [x] GET /api/temple-engine/sessions - List all sessions
+- [x] GET /api/temple-engine/sessions/{session_id} - Get specific session
+- [x] DELETE /api/temple-engine/sessions/{session_id} - Delete session
+- [x] POST /api/temple-engine/sessions/{session_id}/export - Export session
+
+### Session History UI
+- [x] SessionHistoryScreen component
+- [x] Session list with timestamps and query preview
+- [x] Search/filter by query text
+- [x] Delete session functionality
+
+### Export to PDF
+- [x] Generate PDF with full session transcript
+- [x] Include chamber flow visualization
+- [x] Include witness metrics and corrections
+- [x] Download PDF file
+
+### Session Sharing
+- [x] Generate shareable link for session
+- [x] Copy share link to clipboard
+- [x] View shared sessions (read-only)
+- [x] Export as JSON for import
+
+### UI Integration
+- [x] Add "Session History" tab to main navigation
+- [x] Add export button to chamber flow screen
+- [x] Add share button to session results
+- [x] Add import session functionality

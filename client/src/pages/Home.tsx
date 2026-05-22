@@ -105,6 +105,34 @@ function HomeContent() {
         </Button>
       </div>
 
+      {session?.final_answer && (
+        <div className="export-buttons" style={{ display: "flex", gap: "1rem", marginTop: "1rem", justifyContent: "center" }}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const json = JSON.stringify(session, null, 2);
+              const blob = new Blob([json], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `session-${session.id}-${Date.now()}.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Export JSON
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.location.href = "/session-history"}
+          >
+            View History
+          </Button>
+        </div>
+      )}
+
       <div className="screen-tabs">
         <button
           className={`tab ${activeScreen === 'chamber' ? 'active' : ''}`}
@@ -126,11 +154,67 @@ function HomeContent() {
         </button>
       </div>
 
+      {session?.final_answer && (
+        <div className="export-buttons" style={{ display: "flex", gap: "1rem", marginTop: "1rem", justifyContent: "center" }}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const json = JSON.stringify(session, null, 2);
+              const blob = new Blob([json], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `session-${session.id}-${Date.now()}.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Export JSON
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.location.href = "/session-history"}
+          >
+            View History
+          </Button>
+        </div>
+      )}
+
       <div className="screen-content">
         {activeScreen === 'chamber' && <ChamberFlowScreen />}
         {activeScreen === 'witness' && <WitnessFieldScreen />}
         {activeScreen === 'journal' && <CorrectionJournalScreen />}
       </div>
+
+      {session?.final_answer && (
+        <div className="export-buttons" style={{ display: "flex", gap: "1rem", marginTop: "1rem", justifyContent: "center" }}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const json = JSON.stringify(session, null, 2);
+              const blob = new Blob([json], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `session-${session.id}-${Date.now()}.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Export JSON
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.location.href = "/session-history"}
+          >
+            View History
+          </Button>
+        </div>
+      )}
 
       {session?.final_answer && (
         <div className="final-answer-section">

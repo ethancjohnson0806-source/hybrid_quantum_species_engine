@@ -6,6 +6,9 @@ import { router, publicProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { executeTempleEnginePipeline, applyUserFeedbackCorrection } from "../templeEngine.executor";
 import { QuerySession } from "../templeEngine.types";
+import { getDb } from "../db";
+import { querySessions } from "../../drizzle/schema";
+import { desc } from "drizzle-orm";
 
 // In-memory session storage (replace with database in production)
 const sessions = new Map<number, QuerySession>();
@@ -67,9 +70,25 @@ const processQueryProcedure = publicProcedure
       // Execute the full pipeline
       const session = await executeTempleEnginePipeline(input.user_query);
 
-      // Assign ID and store
+      // Assign ID and store in memory
       session.id = sessionIdCounter++;
       sessions.set(session.id, session);
+
+      // Also persist to database
+      try {
+        const db = await getDb();
+        if (db) {
+          await db.insert(querySessions).values({
+            userId: 1, // Default user for now
+            userQuery: input.user_query,
+            status: 'completed' as const,
+            finalAnswer: session.final_answer,
+          });
+        }
+      } catch (dbError) {
+        console.warn('Failed to persist session to database:', dbError);
+        // Continue anyway - in-memory storage still works
+      }
 
       return {
         session_id: session.id,
@@ -275,7 +294,70 @@ const getCorrectionJournalProcedure = publicProcedure
     };
   });
 
+const listSessionsProcedure = publicProcedure
+  .input(z.object({
+    limit: z.number().max(100).default(20),
+    offset: z.number().default(0),
+  }))
+  .query(async ({ input }) => {
+    try {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const allSessions = await db
+        .select()
+        .from(querySessions)
+        .orderBy(desc(querySessions.createdAt))
+        .limit(input.limit)
+        .offset(input.offset);
+
+      return {
+        sessions: allSessions.map(s => ({
+          id: s.id,
+          user_query: s.userQuery,
+          status: s.status,
+          created_at: s.createdAt,
+          final_answer: s.finalAnswer?.substring(0, 200) || 'Processing...',
+        })),
+      };
+    } catch (error) {
+      console.error('Error listing sessions:', error);
+      throw new Error(`Failed to list sessions: ${(error as any).message}`);
+    }
+  });
+
+// Export session as JSON
+const exportSessionProcedure = publicProcedure
+  .input(z.object({
+    session_id: z.number(),
+  }))
+  .query(async ({ input }) => {
+    try {
+      const session = sessions.get(input.session_id);
+      if (!session) {
+        throw new Error(`Session ${input.session_id} not found`);
+      }
+
+      return {
+        session: {
+          id: session.id,
+          user_query: session.user_query,
+          status: session.status,
+          chambers: session.chambers,
+          witness_state: session.witness_state,
+          corrections: session.corrections,
+          final_answer: session.final_answer,
+          created_at: new Date(),
+        },
+      };
+    } catch (error) {
+      console.error('Error exporting session:', error);
+      throw new Error(`Failed to export session: ${(error as any).message}`);
+    }
+  });
+
 export const templeEngineRouter = router({
+  listSessions: listSessionsProcedure,
+  exportSession: exportSessionProcedure,
   createSession: createSessionProcedure,
   processQuery: processQueryProcedure,
   getSession: getSessionProcedure,
