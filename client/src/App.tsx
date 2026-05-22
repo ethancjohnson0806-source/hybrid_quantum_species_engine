@@ -6,6 +6,9 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import { SessionHistory } from "./pages/SessionHistory";
+import { RunBrowser } from "./pages/RunBrowser";
+import { RunViewer } from "./pages/RunViewer";
+import { RunComparison } from "./pages/RunComparison";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -13,6 +16,9 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/session-history"} component={SessionHistory} />
+      <Route path={"/runs"} component={RunBrowser} />
+      <Route path={"/run/:runId"} component={RunViewer} />
+      <Route path={"/compare-runs"} component={RunComparison} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

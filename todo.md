@@ -206,3 +206,39 @@
 - [x] Add export button to chamber flow screen
 - [x] Add share button to session results
 - [x] Add import session functionality
+
+
+## Phase 8: Quantum Engine Integration
+
+### Folder Structure & Export Module
+- [x] Create /templevisu_data/runs/ directory structure
+- [x] Implement quantumExport.ts module with startRun(), logStep(), saveRun() functions
+- [x] Generate run.json files with mode, backend, description, config
+- [x] Generate trajectory.json files with step data (coherence_index, energy, xeb_fidelity, loss)
+- [x] Support optional state_STEP.json files for bitstring distributions
+
+### Run Browser UI
+- [x] Create RunBrowser component to list all .run.json files
+- [x] Display run metadata (mode, backend, date, description)
+- [x] Implement click-to-open run view
+- [x] Add pagination/filtering for large run lists
+
+### Visualization Panels
+- [x] Panel 1: Coherence vs Step (line chart)
+- [x] Panel 2: Energy/Loss vs Step (line chart)
+- [x] Panel 3: XEB Fidelity vs Step (line chart)
+- [x] Panel 4: Bitstring Distribution (bar chart, if state files exist)
+- [x] Use Chart.js or Plotly for visualizations
+
+### Comparison Mode
+- [x] Implement run selection for comparison
+- [x] Overlay coherence curves from multiple runs
+- [x] Overlay energy/loss curves from multiple runs
+- [x] Add legend and color coding for each run
+
+### Integration Testing
+- [x] Test folder structure creation
+- [x] Verify JSON schema compliance
+- [x] Test run browser with sample data
+- [x] Test visualization panel rendering
+- [x] Test comparison mode with multiple runs
