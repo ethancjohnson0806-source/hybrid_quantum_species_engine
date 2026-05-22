@@ -3,168 +3,168 @@
 ## Phase 1: Exact Data Structures & Database Schema
 
 ### Data Structures (Exact per spec)
-- [ ] QuerySession: id, user_query, created_at, chambers[], witness_state, corrections[], final_answer, status
-- [ ] ChamberState: name, input_text, output_text, llm_trace, metrics, entered_at, exited_at
-- [ ] ChamberMetrics: coherence_score, drift_score, symbolic_density, ambiguity_score, recursion_depth, correction_count
-- [ ] WitnessState: overall_coherence, overall_drift, overall_symbolic_density, alignment_score, active_chamber, recursion_depth, total_corrections
-- [ ] CorrectionEvent: id, query_session_id, chamber_name, timestamp, reason, previous_output, corrected_output, delta_summary, severity
+- [x] QuerySession: id, user_query, created_at, chambers[], witness_state, corrections[], final_answer, status
+- [x] ChamberState: name, input_text, output_text, llm_trace, metrics, entered_at, exited_at
+- [x] ChamberMetrics: coherence_score, drift_score, symbolic_density, ambiguity_score, recursion_depth, correction_count
+- [x] WitnessState: overall_coherence, overall_drift, overall_symbolic_density, alignment_score, active_chamber, recursion_depth, total_corrections
+- [x] CorrectionEvent: id, query_session_id, chamber_name, timestamp, reason, previous_output, corrected_output, delta_summary, severity
 
 ### Database Tables (Exact per spec)
-- [ ] query_sessions table
-- [ ] chamber_states table
-- [ ] chamber_metrics table
-- [ ] witness_states table
-- [ ] correction_events table
-- [ ] correction_journal table (indexed: session_id, chamber_name, reason, timestamp)
+- [x] query_sessions table
+- [x] chamber_states table
+- [x] chamber_metrics table
+- [x] witness_states table
+- [x] correction_events table
+- [x] correction_journal table (indexed: session_id, chamber_name, reason, timestamp)
 
 ## Phase 2: Exact Chamber Pipeline
 
 ### Five Chambers (Exact per spec)
-- [ ] Surface: normalize query, extract intent/entities/constraints → output: normalized_query, initial_plan
-- [ ] Descent: break into sub-questions, identify knowledge domains → output: subproblems[], dependency_graph
-- [ ] Compression: generate candidate answers, compress to coherent representation → output: compressed_representation, candidate_answers
-- [ ] Expansion: turn compressed representation into human-readable answer → output: draft_answer
-- [ ] Return: finalize answer, integrate corrections → output: final_answer
+- [x] Surface: normalize query, extract intent/entities/constraints → output: normalized_query, initial_plan
+- [x] Descent: break into sub-questions, identify knowledge domains → output: subproblems[], dependency_graph
+- [x] Compression: generate candidate answers, compress to coherent representation → output: compressed_representation, candidate_answers
+- [x] Expansion: turn compressed representation into human-readable answer → output: draft_answer
+- [x] Return: finalize answer, integrate corrections → output: final_answer
 
 ### Recursion Model (Exact per spec)
-- [ ] Re-entry when coherence_score < 0.6
-- [ ] Re-entry when drift_score > 0.4
-- [ ] Re-entry when alignment_score < 0.6
-- [ ] Re-entry on user feedback
-- [ ] Re-entry on internal consistency failures
-- [ ] Track recursion_depth (increment on each re-entry)
-- [ ] Track parent_chamber_name for traceability
-- [ ] Pass correction_context on re-entry
+- [x] Re-entry when coherence_score < 0.6
+- [x] Re-entry when drift_score > 0.4
+- [x] Re-entry when alignment_score < 0.6
+- [x] Re-entry on user feedback
+- [x] Re-entry on internal consistency failures
+- [x] Track recursion_depth (increment on each re-entry)
+- [x] Track parent_chamber_name for traceability
+- [x] Pass correction_context on re-entry
 
 ## Phase 3: Exact Witness Field & Correction Logic
 
 ### Witness Field Metrics (Exact per spec)
-- [ ] coherence_score: internal consistency (0-1)
-- [ ] drift_score: distance from original query (0-1)
-- [ ] symbolic_density: ratio of abstract to concrete (0-1)
-- [ ] ambiguity_score: unresolved references (0-1)
-- [ ] recursion_depth: int
-- [ ] correction_count: int per chamber
+- [x] coherence_score: internal consistency (0-1)
+- [x] drift_score: distance from original query (0-1)
+- [x] symbolic_density: ratio of abstract to concrete (0-1)
+- [x] ambiguity_score: unresolved references (0-1)
+- [x] recursion_depth: int
+- [x] correction_count: int per chamber
 
 ### WitnessState Aggregation (Exact per spec)
-- [ ] overall_coherence = weighted average of chamber coherence
-- [ ] overall_drift = max or weighted average of drift
-- [ ] overall_symbolic_density = average
-- [ ] alignment_score = heuristic(low drift + high coherence + low ambiguity)
-- [ ] active_chamber = last chamber
-- [ ] total_corrections = length of corrections[]
+- [x] overall_coherence = weighted average of chamber coherence
+- [x] overall_drift = max or weighted average of drift
+- [x] overall_symbolic_density = average
+- [x] alignment_score = heuristic(low drift + high coherence + low ambiguity)
+- [x] active_chamber = last chamber
+- [x] total_corrections = length of corrections[]
 
 ### Correction Logic (Exact per spec)
-- [ ] Trigger: coherence_score < 0.6
-- [ ] Trigger: drift_score > 0.4
-- [ ] Trigger: alignment_score < 0.6
-- [ ] Trigger: user feedback
-- [ ] Trigger: internal consistency failures
-- [ ] Create CorrectionEvent (all fields required)
-- [ ] Decide jump-back chamber (Surface/Descent/Compression/Expansion/Return)
-- [ ] Re-run chamber with correction_context
-- [ ] Store corrected_output and delta_summary
+- [x] Trigger: coherence_score < 0.6
+- [x] Trigger: drift_score > 0.4
+- [x] Trigger: alignment_score < 0.6
+- [x] Trigger: user feedback
+- [x] Trigger: internal consistency failures
+- [x] Create CorrectionEvent (all fields required)
+- [x] Decide jump-back chamber (Surface/Descent/Compression/Expansion/Return)
+- [x] Re-run chamber with correction_context
+- [x] Store corrected_output and delta_summary
 
 ### Correction Journal (Exact per spec)
-- [ ] Persist all CorrectionEvents
-- [ ] Index by: session_id, chamber_name, reason, timestamp
-- [ ] Meta-analysis: most common correction reasons
-- [ ] Meta-analysis: chambers with highest correction rates
-- [ ] Meta-analysis: patterns by query type
+- [x] Persist all CorrectionEvents
+- [x] Index by: session_id, chamber_name, reason, timestamp
+- [x] Meta-analysis: most common correction reasons
+- [x] Meta-analysis: chambers with highest correction rates
+- [x] Meta-analysis: patterns by query type
 
 ## Phase 4: Exact API Contract
 
 ### Endpoints (Exact per spec)
-- [ ] POST /api/temple-engine/session → {session_id, status}
-- [ ] GET /api/temple-engine/session/{session_id} → full session state
-- [ ] GET /api/temple-engine/session/{session_id}/stream → SSE events
-- [ ] POST /api/temple-engine/session/{session_id}/feedback → {status, jump_to_chamber}
-- [ ] GET /api/temple-engine/session/{session_id}/corrections → {corrections[]}
+- [x] POST /api/temple-engine/session → {session_id, status}
+- [x] GET /api/temple-engine/session/{session_id} → full session state
+- [x] GET /api/temple-engine/session/{session_id}/stream → SSE events
+- [x] POST /api/temple-engine/session/{session_id}/feedback → {status, jump_to_chamber}
+- [x] GET /api/temple-engine/session/{session_id}/corrections → {corrections[]}
 
 ### SSE Events (Exact per spec)
-- [ ] chamber_started
-- [ ] chamber_completed
-- [ ] witness_updated
-- [ ] correction_triggered
-- [ ] recursion_entered
-- [ ] session_completed
+- [x] chamber_started
+- [x] chamber_completed
+- [x] witness_updated
+- [x] correction_triggered
+- [x] recursion_entered
+- [x] session_completed
 
 ### JSON Models (Exact per spec)
-- [ ] ChamberState JSON structure
-- [ ] ChamberMetrics JSON structure
-- [ ] WitnessState JSON structure
-- [ ] CorrectionEvent JSON structure
-- [ ] Session response structure
+- [x] ChamberState JSON structure
+- [x] ChamberMetrics JSON structure
+- [x] WitnessState JSON structure
+- [x] CorrectionEvent JSON structure
+- [x] Session response structure
 
 ## Phase 5: Exact UI Component Tree
 
 ### Top-Level (Exact per spec)
-- [ ] AppRoot
-- [ ] HeaderBar
-- [ ] MainLayout
-- [ ] SidebarNavigation
-- [ ] ContentArea
-- [ ] FooterStatusBar
+- [x] AppRoot
+- [x] HeaderBar
+- [x] MainLayout
+- [x] SidebarNavigation
+- [x] ContentArea
+- [x] FooterStatusBar
 
 ### ChamberFlowScreen (Exact per spec)
-- [ ] ChamberFlowScreen
-- [ ] ChamberTransitionGraph
-- [ ] ChamberNode (for each chamber)
-- [ ] ChamberIcon, ChamberTitle, ChamberMetricBadges
-- [ ] TransitionLine (animated)
-- [ ] ChamberDetailPanel
-- [ ] ChamberInputBlock, ChamberOutputBlock
-- [ ] ChamberMetricsPanel
-- [ ] MetricGauge (coherence, drift, symbolic_density, ambiguity)
-- [ ] RecursionIndicator
-- [ ] CorrectionCountBadge
+- [x] ChamberFlowScreen
+- [x] ChamberTransitionGraph
+- [x] ChamberNode (for each chamber)
+- [x] ChamberIcon, ChamberTitle, ChamberMetricBadges
+- [x] TransitionLine (animated)
+- [x] ChamberDetailPanel
+- [x] ChamberInputBlock, ChamberOutputBlock
+- [x] ChamberMetricsPanel
+- [x] MetricGauge (coherence, drift, symbolic_density, ambiguity)
+- [x] RecursionIndicator
+- [x] CorrectionCountBadge
 
 ### WitnessFieldScreen (Exact per spec)
-- [ ] WitnessFieldScreen
-- [ ] WitnessHalo (animated aura)
-- [ ] WitnessMetricGrid
-- [ ] MetricGauge (overall_coherence, overall_drift, overall_symbolic_density, ambiguity)
-- [ ] AlignmentScoreGauge
-- [ ] WitnessStatePanel
-- [ ] ActiveChamberIndicator
-- [ ] RecursionDepthCounter
-- [ ] TotalCorrectionsCounter
+- [x] WitnessFieldScreen
+- [x] WitnessHalo (animated aura)
+- [x] WitnessMetricGrid
+- [x] MetricGauge (overall_coherence, overall_drift, overall_symbolic_density, ambiguity)
+- [x] AlignmentScoreGauge
+- [x] WitnessStatePanel
+- [x] ActiveChamberIndicator
+- [x] RecursionDepthCounter
+- [x] TotalCorrectionsCounter
 
 ### CorrectionJournalScreen (Exact per spec)
-- [ ] CorrectionJournalScreen
-- [ ] CorrectionTimeline
-- [ ] CorrectionCard (repeated)
-- [ ] CorrectionHeader, CorrectionReasonTag, CorrectionSeverityBadge
-- [ ] BeforeAfterDiff, DeltaSummary, TimestampLabel
-- [ ] CorrectionFilterBar
-- [ ] CorrectionStatsPanel
+- [x] CorrectionJournalScreen
+- [x] CorrectionTimeline
+- [x] CorrectionCard (repeated)
+- [x] CorrectionHeader, CorrectionReasonTag, CorrectionSeverityBadge
+- [x] BeforeAfterDiff, DeltaSummary, TimestampLabel
+- [x] CorrectionFilterBar
+- [x] CorrectionStatsPanel
 
 ### Shared Components (Exact per spec)
-- [ ] MetricGauge
-- [ ] Badge, Tag
-- [ ] DiffViewer
-- [ ] AnimatedArc, RippleEffect, GlowPulse
-- [ ] StateProvider, ThemeProvider
+- [x] MetricGauge
+- [x] Badge, Tag
+- [x] DiffViewer
+- [x] AnimatedArc, RippleEffect, GlowPulse
+- [x] StateProvider, ThemeProvider
 
 ### State Providers (Exact per spec)
-- [ ] SessionStateProvider (holds all chamber states)
-- [ ] WitnessStateProvider (holds all witness metrics)
-- [ ] CorrectionJournalProvider (holds all correction events)
+- [x] SessionStateProvider (holds all chamber states)
+- [x] WitnessStateProvider (holds all witness metrics)
+- [x] CorrectionJournalProvider (holds all correction events)
 
 ## Phase 6: Integration & Testing
 
 ### End-to-End
-- [ ] Wire ChamberFlowScreen to API
-- [ ] Wire WitnessFieldScreen to API
-- [ ] Wire CorrectionJournalScreen to API
-- [ ] Implement SSE streaming to UI
-- [ ] Test full query processing
-- [ ] Test correction triggering
-- [ ] Test recursion and re-entry
-- [ ] Test correction journal
+- [x] Wire ChamberFlowScreen to API
+- [x] Wire WitnessFieldScreen to API
+- [x] Wire CorrectionJournalScreen to API
+- [x] Implement SSE streaming to UI
+- [x] Test full query processing
+- [x] Test correction triggering
+- [x] Test recursion and re-entry
+- [x] Test correction journal
 
 ### Final
-- [ ] All spec requirements implemented
-- [ ] No shortcuts or inventions
-- [ ] Production-ready
-- [ ] Save checkpoint
+- [x] All spec requirements implemented
+- [x] No shortcuts or inventions
+- [x] Production-ready
+- [x] Save checkpoint

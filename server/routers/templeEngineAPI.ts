@@ -33,10 +33,63 @@ const createSessionProcedure = publicProcedure
       return {
         session_id: session.id,
         status: session.status,
+        chambers: session.chambers.map(c => ({
+          name: c.name,
+          input_text: c.input_text,
+          output_text: c.output_text,
+          metrics: c.metrics,
+          entered_at: c.entered_at,
+          exited_at: c.exited_at,
+          recursion_depth: c.recursion_depth,
+        })),
+        witness_state: session.witness_state,
+        corrections: session.corrections,
+        final_answer: session.final_answer,
       };
     } catch (error) {
       console.error('Error creating session:', error);
       throw new Error(`Failed to create session: ${(error as any).message}`);
+    }
+  });
+
+/**
+ * processQuery - Alias for createSession to match frontend expectations
+ * This is the primary endpoint the frontend calls
+ */
+const processQueryProcedure = publicProcedure
+  .input(z.object({
+    user_query: z.string().min(1),
+    emotional_valence: z.number().min(-1).max(1).optional(),
+    urgency: z.number().min(0).max(1).optional(),
+  }))
+  .mutation(async ({ input }) => {
+    try {
+      // Execute the full pipeline
+      const session = await executeTempleEnginePipeline(input.user_query);
+
+      // Assign ID and store
+      session.id = sessionIdCounter++;
+      sessions.set(session.id, session);
+
+      return {
+        session_id: session.id,
+        status: session.status,
+        chambers: session.chambers.map(c => ({
+          name: c.name,
+          input_text: c.input_text,
+          output_text: c.output_text,
+          metrics: c.metrics,
+          entered_at: c.entered_at,
+          exited_at: c.exited_at,
+          recursion_depth: c.recursion_depth,
+        })),
+        witness_state: session.witness_state,
+        corrections: session.corrections,
+        final_answer: session.final_answer,
+      };
+    } catch (error) {
+      console.error('Error processing query:', error);
+      throw new Error(`Failed to process query: ${(error as any).message}`);
     }
   });
 
@@ -224,6 +277,7 @@ const getCorrectionJournalProcedure = publicProcedure
 
 export const templeEngineRouter = router({
   createSession: createSessionProcedure,
+  processQuery: processQueryProcedure,
   getSession: getSessionProcedure,
   streamSession: streamSessionProcedure,
   submitFeedback: submitFeedbackProcedure,

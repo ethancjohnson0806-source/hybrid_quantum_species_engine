@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { SessionStateProvider, useSessionState } from '@/contexts/SessionStateProvider';
 import { WitnessStateProvider } from '@/contexts/WitnessStateProvider';
 import { CorrectionJournalProvider, useCorrectionJournal } from '@/contexts/CorrectionJournalProvider';
@@ -17,19 +17,10 @@ function HomeContent() {
   const [query, setQuery] = useState('');
   const [emotionalValence, setEmotionalValence] = useState(0.5);
   const [urgency, setUrgency] = useState(0.5);
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  const processQuery = async () => {
-    if (!query.trim()) return;
-
-    setIsProcessing(true);
-    try {
-      const result = await trpc.templeEngine.processQuery.mutate({
-        user_query: query,
-        emotional_valence: emotionalValence,
-        urgency: urgency,
-      });
-
+  // Use tRPC mutation hook correctly
+  const processQueryMutation = trpc.templeEngine.processQuery.useMutation({
+    onSuccess: (result) => {
       setSession({
         id: result.session_id,
         user_query: query,
@@ -54,11 +45,19 @@ function HomeContent() {
           timestamp: new Date().toISOString(),
         });
       });
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('Error processing query:', error);
-    } finally {
-      setIsProcessing(false);
-    }
+    },
+  });
+
+  const processQuery = async () => {
+    if (!query.trim()) return;
+    await processQueryMutation.mutateAsync({
+      user_query: query,
+      emotional_valence: emotionalValence,
+      urgency: urgency,
+    });
   };
 
   return (
@@ -73,7 +72,7 @@ function HomeContent() {
           placeholder="Enter your query..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          disabled={isProcessing}
+          disabled={processQueryMutation.isPending}
         />
         <div className="slider-group">
           <div className="slider-item">
@@ -99,10 +98,10 @@ function HomeContent() {
         </div>
         <Button
           onClick={processQuery}
-          disabled={isProcessing || !query.trim()}
+          disabled={processQueryMutation.isPending || !query.trim()}
           className="process-button"
         >
-          {isProcessing ? 'Processing...' : 'Process Query'}
+          {processQueryMutation.isPending ? 'Processing...' : 'Process Query'}
         </Button>
       </div>
 
@@ -137,6 +136,12 @@ function HomeContent() {
         <div className="final-answer-section">
           <h2>Final Revelation</h2>
           <p>{session.final_answer}</p>
+        </div>
+      )}
+
+      {processQueryMutation.isError && (
+        <div className="error-section">
+          <p>Error: {processQueryMutation.error?.message || 'Unknown error occurred'}</p>
         </div>
       )}
     </div>
