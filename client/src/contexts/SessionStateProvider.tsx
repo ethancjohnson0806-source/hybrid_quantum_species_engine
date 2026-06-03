@@ -6,7 +6,7 @@ export interface ChamberState {
   output_text: string;
   metrics: any;
   entered_at: string;
-  exited_at: string;
+  exited_at?: string;
 }
 
 export interface QuerySession {

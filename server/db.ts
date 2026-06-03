@@ -105,9 +105,8 @@ export async function createQuerySession(
   try {
     const result = await db.insert(querySessions).values({
       userId,
-      query,
-      emotionalValence: emotionalValence.toString(),
-      urgency: urgency.toString(),
+      userQuery: query,
+      status: 'in_progress',
     });
     return result;
   } catch (error) {
@@ -152,8 +151,7 @@ export async function saveChamberState(
     const result = await db.insert(chamberStates).values({
       sessionId,
       chamberName,
-      stateData: JSON.stringify(stateData),
-      coherenceScore: coherenceScore?.toString(),
+      inputText: JSON.stringify(stateData),
     });
     return result;
   } catch (error) {

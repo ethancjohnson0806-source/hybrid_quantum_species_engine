@@ -41,8 +41,8 @@ const createSessionProcedure = publicProcedure
           input_text: c.input_text,
           output_text: c.output_text,
           metrics: c.metrics,
-          entered_at: c.entered_at,
-          exited_at: c.exited_at,
+          entered_at: c.entered_at instanceof Date ? c.entered_at.toISOString() : c.entered_at,
+          exited_at: c.exited_at instanceof Date ? c.exited_at.toISOString() : c.exited_at,
           recursion_depth: c.recursion_depth,
         })),
         witness_state: session.witness_state,
@@ -98,8 +98,8 @@ const processQueryProcedure = publicProcedure
           input_text: c.input_text,
           output_text: c.output_text,
           metrics: c.metrics,
-          entered_at: c.entered_at,
-          exited_at: c.exited_at,
+          entered_at: c.entered_at instanceof Date ? c.entered_at.toISOString() : c.entered_at,
+          exited_at: c.exited_at instanceof Date ? c.exited_at.toISOString() : c.exited_at,
           recursion_depth: c.recursion_depth,
         })),
         witness_state: session.witness_state,
@@ -269,7 +269,7 @@ const getCorrectionJournalProcedure = publicProcedure
 
     // Filter by reason if specified
     if (input.reason) {
-      corrections = corrections.filter(c => c.reason.includes(input.reason));
+      corrections = corrections.filter(c => c.reason && c.reason.includes(input.reason || ''));
     }
 
     // Meta-analysis

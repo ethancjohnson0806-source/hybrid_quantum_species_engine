@@ -24,8 +24,8 @@ export interface ChamberState {
   output_text: string;
   llm_trace?: string;
   metrics: ChamberMetrics;
-  entered_at: Date;
-  exited_at?: Date;
+  entered_at: Date | string;
+  exited_at?: Date | string;
   recursion_depth?: number;
   parent_chamber_name?: ChamberName;
 }
