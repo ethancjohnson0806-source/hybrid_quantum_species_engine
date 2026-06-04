@@ -149,3 +149,65 @@ export function getQuantumBridge(): QuantumBridge {
 
 // For backward compatibility
 export const quantumBridge = getQuantumBridge();
+
+  // ===== Temple Quantum v5.0 Methods =====
+
+  async paramsToState(params: number[]): Promise<number[]> {
+    return this.executeCommand('params_to_state', { params });
+  }
+
+  async buildHamiltonian(
+    text: string,
+    memoryParams?: number[],
+    cloudField?: Record<string, any>
+  ): Promise<number[][]> {
+    return this.executeCommand('build_hamiltonian', {
+      text,
+      memory_params: memoryParams,
+      cloud_field: cloudField,
+    });
+  }
+
+  async evolve(H: number[][], iterations?: number): Promise<{
+    params: number[];
+    energy: number;
+    state: number[];
+  }> {
+    return this.executeCommand('evolve', { H, iterations: iterations || 50 });
+  }
+
+  async applyCloudDecoherence(
+    params: number[],
+    cloudField?: Record<string, any>
+  ): Promise<number[]> {
+    return this.executeCommand('apply_cloud_decoherence', {
+      params,
+      cloud_field: cloudField,
+    });
+  }
+
+  async measureField(state: number[]): Promise<Record<string, number>> {
+    return this.executeCommand('measure_field', { state });
+  }
+
+  async quantumFidelity(stateA: number[], stateB: number[]): Promise<number> {
+    return this.executeCommand('quantum_fidelity', {
+      state_a: stateA,
+      state_b: stateB,
+    });
+  }
+
+  async storyResonance(storyText: string, currentState: number[]): Promise<number> {
+    return this.executeCommand('story_resonance', {
+      story_text: storyText,
+      current_state: currentState,
+    });
+  }
+
+  async textToParams(text: string): Promise<number[]> {
+    return this.executeCommand('text_to_params', { text });
+  }
+
+  async calculateEntropy(state: number[]): Promise<number> {
+    return this.executeCommand('calculate_entropy', { state });
+  }

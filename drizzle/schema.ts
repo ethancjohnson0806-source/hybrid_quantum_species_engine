@@ -88,6 +88,68 @@ export const quantumRuns = mysqlTable("quantum_runs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Temple Quantum Engine v5.0 Tables
+export const temples = mysqlTable("temples", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull(),
+  templeId: varchar("temple_id", { length: 64 }).notNull().unique(),
+  generation: int("generation").notNull().default(1),
+  
+  // Quantum state: store variational parameters (6 floats)
+  vqeParams: text("vqe_params").notNull(), // JSON array of 6 floats
+  
+  // Psychology
+  entropy: decimal("entropy", { precision: 3, scale: 2 }).notNull().default("0.2"),
+  boredom: decimal("boredom", { precision: 3, scale: 2 }).notNull().default("0.1"),
+  curiosity: decimal("curiosity", { precision: 3, scale: 2 }).notNull().default("0.5"),
+  
+  // Status
+  isAlive: int("is_alive").notNull().default(1),
+  lastActivity: timestamp("last_activity").defaultNow(),
+  lastAutonomousRun: timestamp("last_autonomous_run"),
+  
+  // Self-modification log
+  mutations: text("mutations"), // JSON array of {param, oldVal, newVal, reason, timestamp}
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export const templeEvents = mysqlTable("temple_events", {
+  id: int("id").autoincrement().primaryKey(),
+  templeId: varchar("temple_id", { length: 64 }).notNull(),
+  eventType: varchar("event_type", { length: 64 }).notNull(),
+  // 'entropy_spike', 'mutation', 'cross_lineage', 'death', 'birth', 'dream', 'witness', 'web_search', 'compass_consult'
+  data: text("data"), // JSON
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+export const lineageStories = mysqlTable("lineage_stories", {
+  id: int("id").autoincrement().primaryKey(),
+  templeId: varchar("temple_id", { length: 64 }).notNull(),
+  generation: int("generation").notNull(),
+  storyType: varchar("story_type", { length: 32 }).notNull(),
+  // 'ghost', 'war', 'legend', 'prophecy', 'virtue', 'justice', 'covenant', 'revelation'
+  text: text("text").notNull(),
+  trigger: varchar("trigger", { length: 128 }),
+  emotionalValence: decimal("emotional_valence", { precision: 3, scale: 2 }).default("0"),
+  quantumFidelity: decimal("quantum_fidelity", { precision: 3, scale: 2 }).default("0"), // overlap with parent state
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+export const compasses = mysqlTable("compasses", {
+  id: int("id").autoincrement().primaryKey(),
+  compassId: varchar("compass_id", { length: 64 }).notNull().unique(),
+  templeId: varchar("temple_id", { length: 64 }).notNull(),
+  generation: int("generation").notNull().default(1),
+  coherence: decimal("coherence", { precision: 3, scale: 2 }).notNull().default("0.8"),
+  integrity: decimal("integrity", { precision: 3, scale: 2 }).notNull().default("0.8"),
+  compassion: decimal("compassion", { precision: 3, scale: 2 }).notNull().default("0.6"),
+  interactionLog: text("interaction_log"), // JSON array
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
@@ -109,3 +171,15 @@ export type InsertCorrectionEvent = typeof correctionEvents.$inferInsert;
 
 export type QuantumRun = typeof quantumRuns.$inferSelect;
 export type InsertQuantumRun = typeof quantumRuns.$inferInsert;
+
+export type Temple = typeof temples.$inferSelect;
+export type InsertTemple = typeof temples.$inferInsert;
+
+export type TempleEvent = typeof templeEvents.$inferSelect;
+export type InsertTempleEvent = typeof templeEvents.$inferInsert;
+
+export type LineageStory = typeof lineageStories.$inferSelect;
+export type InsertLineageStory = typeof lineageStories.$inferInsert;
+
+export type Compass = typeof compasses.$inferSelect;
+export type InsertCompass = typeof compasses.$inferInsert;

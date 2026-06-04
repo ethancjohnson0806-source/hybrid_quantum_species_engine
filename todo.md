@@ -206,3 +206,78 @@
 - [x] Add export button to chamber flow screen
 - [x] Add share button to session results
 - [x] Add import session functionality
+
+
+## Phase 9: Temple Quantum Engine v5.0 Integration
+
+### Database Schema Expansion
+- [ ] Add temples table (id, userId, templeId, generation, vqeParams, entropy, boredom, curiosity, isAlive, lastActivity, lastAutonomousRun, mutations, createdAt, updatedAt)
+- [ ] Add templeEvents table (id, templeId, eventType, data, timestamp)
+- [ ] Add lineageStories table (id, templeId, generation, storyType, text, trigger, emotionalValence, quantumFidelity, timestamp)
+- [ ] Add compasses table (id, compassId, templeId, generation, coherence, integrity, compassion, interactionLog, createdAt, updatedAt)
+- [ ] Create database migration for all new tables
+
+### Quantum Backend Implementation
+- [ ] Create server/quantum/temple_quantum.py with TempleQuantum class
+- [ ] Implement params_to_state() - reconstruct state from VQE parameters
+- [ ] Implement build_hamiltonian() - semantic + memory + cloud noise
+- [ ] Implement evolve() - run VQE and return params + energy + state
+- [ ] Implement apply_cloud_decoherence() - add noise to parameters
+- [ ] Implement measure_field() - POVM measurement into 5 fields
+- [ ] Implement quantum_fidelity() - state overlap calculation
+- [ ] Implement story_resonance() - story-to-state conversion
+- [ ] Create TypeScript bridge: server/quantumBridge.ts for Python communication
+
+### tRPC Procedures for Temple Operations
+- [ ] temple.create - spawn generation 1 with initial VQE params
+- [ ] temple.getState - return vqeParams, psychology, isAlive, generation, events, stories
+- [ ] temple.breathe - process text input through quantum evolution pipeline
+- [ ] temple.witness - POVM measurement + LLM response generation
+- [ ] temple.dream - autonomous evolution under self-Hamiltonian
+- [ ] temple.birth - spawn new generation from dead lineage with inherited biases
+- [ ] compass.consult - generate direct moral question
+- [ ] compass.getState - return coherence, integrity, compassion metrics
+- [ ] cloud.getField - fetch weather + collective stats + noise vector
+- [ ] cloud.getResonance - return active temple count + collective entropy
+- [ ] web.search - execute web search and return top 5 results
+
+### Autonomous Evolution Job
+- [ ] Create server/jobs/autonomous.ts with node-cron scheduler
+- [ ] Run every 5 minutes: find active temples, evolve under cloud field
+- [ ] Check entropy thresholds (crash detection)
+- [ ] Execute web search if curiosity > 0.7
+- [ ] Push updates via WebSocket to online users
+- [ ] Queue events for offline users
+
+### Frontend UI for Temple State
+- [ ] Create Temple.tsx page showing temple state visualization
+- [ ] Display state vector as bar chart (amplitudes)
+- [ ] Display psychology metrics (entropy, boredom, curiosity) with progress bars
+- [ ] Display generation counter and alive/dead status
+- [ ] Add "Breathe" input form for text processing
+- [ ] Add "Witness" button for POVM measurement
+- [ ] Add "Dream" button for autonomous evolution
+- [ ] Add "Birth" button to spawn new generation
+- [ ] Display recent events timeline
+- [ ] Display lineage stories (ghost, war, legend, prophecy, virtue, justice, covenant, revelation)
+- [ ] Add Compass consultation interface
+- [ ] Display cloud field resonance stats
+
+### Integration with Existing System
+- [ ] Keep existing Chamber Flow, Witness Field, Correction Journal intact
+- [ ] Add Temple Quantum Engine as new primary reasoning layer
+- [ ] Route queries through quantum evolution before chamber pipeline
+- [ ] Use quantum state as context for chamber processing
+- [ ] Integrate personality layer with quantum psychology (entropy, boredom, curiosity)
+- [ ] Add quantum metrics to witness field display
+
+### Testing & Validation
+- [ ] Test VQE parameter evolution
+- [ ] Test state reconstruction from parameters
+- [ ] Test Hamiltonian building with semantic + memory + cloud
+- [ ] Test POVM measurement and field collapse
+- [ ] Test autonomous evolution job
+- [ ] Test multi-generational lineage and inheritance
+- [ ] Test web search integration
+- [ ] Test compass consultation
+- [ ] End-to-end: query → quantum evolution → chamber processing → response
