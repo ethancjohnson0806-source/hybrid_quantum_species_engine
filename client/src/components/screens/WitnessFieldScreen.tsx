@@ -18,15 +18,15 @@ export default function WitnessFieldScreen() {
         <h2>Witness Field</h2>
         <p>Real-time observation of system coherence</p>
       </div>
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '1rem' }}>
-        <Button variant="outline" size="sm" onClick={handleScrollToTop}>
-          ↑ Return to Top
-        </Button>
-      </div>
       <div className="witness-field-content">
         <WitnessHalo witnessState={session?.witness_state} />
         <WitnessMetricGrid witnessState={session?.witness_state} />
         <WitnessStatePanel witnessState={session?.witness_state} />
+      </div>
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
+        <Button variant="outline" size="sm" onClick={handleScrollToTop}>
+          ↑ Return to Top
+        </Button>
       </div>
     </div>
   );

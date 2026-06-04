@@ -18,11 +18,6 @@ export default function ChamberFlowScreen() {
         <h2>Chamber Flow</h2>
         <p>Trace the query through the five chambers</p>
       </div>
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '1rem' }}>
-        <Button variant="outline" size="sm" onClick={handleScrollToTop}>
-          ↑ Return to Top
-        </Button>
-      </div>
       <div className="chamber-flow-content">
         <ChamberTransitionGraph 
           chambers={session?.chambers || []}
@@ -32,6 +27,11 @@ export default function ChamberFlowScreen() {
         {session?.chambers && session.chambers[selectedChamber] && (
           <ChamberDetailPanel chamber={session.chambers[selectedChamber]} />
         )}
+      </div>
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
+        <Button variant="outline" size="sm" onClick={handleScrollToTop}>
+          ↑ Return to Top
+        </Button>
       </div>
     </div>
   );

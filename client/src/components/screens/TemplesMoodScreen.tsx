@@ -88,14 +88,6 @@ export default function TemplesMoodScreen() {
 
   return (
     <div className="space-y-6 p-6">
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-        <button
-          onClick={handleScrollToTop}
-          className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700"
-        >
-          ↑ Return to Top
-        </button>
-      </div>
       {/* Mood Header */}
       <div
         className="rounded-lg p-6 text-white text-center"
@@ -284,6 +276,15 @@ export default function TemplesMoodScreen() {
               <p>No lineage yet. Process queries to build the Temple's ancestral memory.</p>
             </Card>
           ))}
+      
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
+        <button
+          onClick={handleScrollToTop}
+          className="px-4 py-2 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 transition"
+        >
+          ↑ Return to Top
+        </button>
+      </div>
     </div>
   );
 }

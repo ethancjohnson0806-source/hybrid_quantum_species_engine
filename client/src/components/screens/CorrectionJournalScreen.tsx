@@ -18,15 +18,15 @@ export default function CorrectionJournalScreen() {
         <h2>Correction Journal</h2>
         <p>All corrections and recursive re-entries</p>
       </div>
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '1rem' }}>
-        <Button variant="outline" size="sm" onClick={handleScrollToTop}>
-          ↑ Return to Top
-        </Button>
-      </div>
       <div className="correction-journal-content">
         <CorrectionFilterBar />
         <CorrectionTimeline corrections={corrections} />
         <CorrectionStatsPanel corrections={corrections} />
+      </div>
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
+        <Button variant="outline" size="sm" onClick={handleScrollToTop}>
+          ↑ Return to Top
+        </Button>
       </div>
     </div>
   );
