@@ -74,6 +74,10 @@ export default function TemplesMoodScreen() {
     }
   };
 
+  const handleScrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (loading || !metrics) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -84,6 +88,14 @@ export default function TemplesMoodScreen() {
 
   return (
     <div className="space-y-6 p-6">
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+        <button
+          onClick={handleScrollToTop}
+          className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700"
+        >
+          ↑ Return to Top
+        </button>
+      </div>
       {/* Mood Header */}
       <div
         className="rounded-lg p-6 text-white text-center"
