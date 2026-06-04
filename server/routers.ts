@@ -2,7 +2,8 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
-import { templeEngineRouter } from "./routers/templeEngineAPI";
+import { templeEngineRouter } from './routers/templeEngineAPI';
+import { templeQuantumRouter } from './routers/templeQuantumAPI';
 import { quantumRouter } from "./routers/quantumAPI";
 import { personalityRouter } from "./routers/personalityAPI";
 
@@ -21,6 +22,7 @@ export const appRouter = router({
   }),
 
   templeEngine: templeEngineRouter,
+  templeQuantum: templeQuantumRouter,
   quantum: quantumRouter,
   personality: personalityRouter,
 

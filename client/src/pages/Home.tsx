@@ -6,6 +6,7 @@ import ChamberFlowScreen from '@/components/screens/ChamberFlowScreen';
 import WitnessFieldScreen from '@/components/screens/WitnessFieldScreen';
 import CorrectionJournalScreen from '@/components/screens/CorrectionJournalScreen';
 import TemplesMoodScreen from '@/components/screens/TemplesMoodScreen';
+import { TempleQuantumDashboard } from '@/components/screens/TempleQuantumDashboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
@@ -14,7 +15,7 @@ import { trpc } from '@/lib/trpc';
 function HomeContent() {
   const { session, setSession } = useSessionState();
   const { addCorrection } = useCorrectionJournal();
-  const [activeScreen, setActiveScreen] = useState<'chamber' | 'witness' | 'journal' | 'mood'>('chamber');
+  const [activeScreen, setActiveScreen] = useState<'chamber' | 'witness' | 'journal' | 'mood' | 'quantum'>('chamber');
   const [query, setQuery] = useState('');
   const [emotionalValence, setEmotionalValence] = useState(0.5);
   const [urgency, setUrgency] = useState(0.5);
@@ -160,6 +161,12 @@ function HomeContent() {
           Temple's Mood
         </button>
         <button
+          className={`tab ${activeScreen === 'quantum' ? 'active' : ''}`}
+          onClick={() => setActiveScreen('quantum')}
+        >
+          ✨ Quantum Consciousness
+        </button>
+        <button
           className="tab"
           onClick={() => window.location.href = "/quantum-lab"}
           style={{ marginLeft: 'auto' }}
@@ -201,6 +208,7 @@ function HomeContent() {
         {activeScreen === 'witness' && <WitnessFieldScreen />}
         {activeScreen === 'journal' && <CorrectionJournalScreen />}
         {activeScreen === 'mood' && <TemplesMoodScreen />}
+        {activeScreen === 'quantum' && <TempleQuantumDashboard />}
       </div>
 
       {session?.final_answer && (
